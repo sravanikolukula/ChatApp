@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import assets, { imagesDummyData } from "../assets/assets";
+import assets, { imagesDummyData } from "../assets/assets.js";
 import { useChatContext } from "../context/ChatContext";
 import { useAuthContext } from "../context/AuthContext";
 
-const RightSidebar = () => {
+const RightSidebar = ({ isMobile, onClose }) => {
   const { onlineUsers, logout } = useAuthContext();
-  const { selectedUser, messages } = useChatContext();
+  const { selectedUser, setSelectedUser, messages } = useChatContext();
   const [msgImages, setMsgImages] = useState([]);
 
   useEffect(() => {
@@ -15,9 +15,27 @@ const RightSidebar = () => {
     selectedUser && (
       <div
         className={`bg-[#818582]/10 text-white w-full relative overflow-y-scroll ${
-          selectedUser ? "max-md:hidden" : ""
+          isMobile ? "block md:hidden" : "hidden md:block"
         }`}
       >
+        {/*  {isMobile && (
+           <button
+            onClick={onClose}
+            className="absolute top-2 left-2 z-50 bg-red-600 text-white px-2 py-1 rounded"
+          >
+            
+          </button> 
+        )} */}
+
+        {isMobile && (
+          <img
+            src={assets.arrow_icon}
+            alt="arrow-icon"
+            /*     className="absolute top-2 left-2 z-50 w-3 h-3 text-white px-2 py-1 rounded" */
+            onClick={onClose}
+            className="absolute top-2 left-2  md:hidden invert max-w-7"
+          />
+        )}
         <div className="pt-6 flex flex-col items-center justify-center text-xs font-light gap-2">
           <img
             src={selectedUser?.profilePic || assets.avatar_icon}
@@ -49,7 +67,10 @@ const RightSidebar = () => {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={() => {
+            setSelectedUser(null);
+            logout();
+          }}
           className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-400 to-violet-600 text-white border-none text-sm font-light py-2 px-20 rounded-full cursor-pointer "
         >
           Logout

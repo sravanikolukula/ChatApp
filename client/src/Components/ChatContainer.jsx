@@ -4,16 +4,11 @@ import { formatMessageTime } from "../lib/utils";
 import { useChatContext } from "../context/ChatContext.jsx";
 import { useAuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import RightSidebar from "./RightSidebar.jsx";
 
-const ChatContainer = () => {
-  const {
-    users,
-    selectedUser,
-    setSelectedUser,
-    messages,
-    getMessages,
-    sendMessage,
-  } = useChatContext();
+const ChatContainer = ({ onHeaderClick }) => {
+  const { selectedUser, setSelectedUser, messages, getMessages, sendMessage } =
+    useChatContext();
 
   const { authUser, onlineUsers } = useAuthContext();
 
@@ -56,9 +51,19 @@ const ChatContainer = () => {
     }
   }, [messages]);
 
-  return selectedUser ? (
+  return !selectedUser ? (
+    <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-500 bg-white/10 ">
+      <img src={assets.logo_icon} alt="logo" className="max-w-16" />
+      <p className="text-lg font-medium text-white">Chat anytime,anywhere</p>
+    </div>
+  ) : (
     <div className=" realtive h-full backdrop-blur-lg overflow-y-scroll">
-      <div className="flex items-center gap-3 mx-4 py-3 border-b  border-stone-500 ">
+      <div
+        onClick={() => {
+          onHeaderClick();
+        }}
+        className="flex items-center gap-3 mx-4 py-3 border-b  border-stone-500 "
+      >
         <img
           src={selectedUser.profilePic || assets.avatar_icon}
           alt="profilePic"
@@ -76,7 +81,10 @@ const ChatContainer = () => {
           src={assets.arrow_icon}
           alt="arrow-icon"
           className="md:hidden invert max-w-7"
-          onClick={() => setSelectedUser(null)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedUser(null);
+          }}
         />
         <img
           src={assets.help_icon}
@@ -166,11 +174,6 @@ const ChatContainer = () => {
           className="w-7 cursor-pointer"
         />
       </div>
-    </div>
-  ) : (
-    <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-500 bg-white/10 max-md:hidden">
-      <img src={assets.logo_icon} alt="logo" className="max-w-16" />
-      <p className="text-lg font-medium text-white">Chat anytime,anywhere</p>
     </div>
   );
 };

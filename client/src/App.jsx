@@ -9,7 +9,7 @@ import { useAuthContext } from "./context/AuthContext";
 const App = () => {
   const navigate = useNavigate();
   const { authUser } = useAuthContext();
-  console.log("AuthUser", authUser);
+
   return (
     <div className="bg-[url('/bgImage.svg')] bg-contain">
       <Toaster />
