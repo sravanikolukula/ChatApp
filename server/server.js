@@ -6,6 +6,9 @@ import { connectDB } from "./libs/db.js";
 import { Server } from "socket.io";
 import { userRouter } from "./routes/userRoutes.js";
 import { messageRouter } from "./routes/messageRoutes.js";
+import { groupRouter } from "./routes/groupRoutes.js";
+import { Groups } from "./models/Group.js";
+import { group } from "console";
 
 //create express app  and HTTP server
 const app = express();
@@ -20,19 +23,63 @@ export const io = new Server(server, {
 export const userSocketMap = {}; //{userId,socketId}
 
 //socket io connectino Handler
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId;
   console.log("User connected", userId);
 
   if (userId) userSocketMap[userId] = socket.id;
 
+  //fetch users groups and join their rooms
+  try {
+    const groups = await Groups.find({ members: userId }).select("_id");
+    groups.forEach((group) => {
+      socket.join(group._id.toString());
+      console.log("User joined grp", userId, group._id);
+    });
+  } catch (error) {
+    console.error("Error joining grp");
+  }
+
   //Emit online users to all connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
+  socket.on("typing", ({ toUserId }) => {
+    const toSocketId = userSocketMap[toUserId];
+
+    if (toSocketId) {
+      io.to(toSocketId).emit("typing", { fromUserId: userId });
+    }
+  });
+
+  socket.on("stopTyping", ({ toUserId }) => {
+    const toSocketId = userSocketMap[toUserId];
+    if (toSocketId) {
+      io.to(toSocketId).emit("stopTyping", { fromUserId: userId });
+    }
+  });
+
+  socket.on("group-typing", ({ groupId, fromUserId, fullName }) => {
+    socket.to(groupId).emit("group-typing", {
+      fromUserId,
+      fullName,
+      groupId,
+    });
+  });
+
+  socket.on("group-stopTyping", ({ groupId, fromUserId }) => {
+    socket.to(groupId).emit("group-stopTyping", {
+      fromUserId,
+      groupId,
+    });
+  });
+
+  socket.on("joinGroup", (groupId) => {
+    socket.join(groupId);
+  });
+
   socket.on("disconnect", () => {
-    console.log("User disconnected", userId);
     delete userSocketMap[userId];
-    io.emit("getOnlineUsers", Object.keys.userSocketMap);
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 
@@ -48,6 +95,7 @@ app.use("/api/server", (req, res) => {
 });
 app.use("/api/auth", userRouter);
 app.use("/api/message", messageRouter);
+app.use("/api/group", groupRouter);
 //connect to MongoDB
 await connectDB();
 

@@ -5,7 +5,7 @@ import RightSidebar from "../Components/RightSidebar.jsx";
 import { useChatContext } from "../context/ChatContext.jsx";
 
 const Home = () => {
-  const { selectedUser } = useChatContext();
+  const { selectedUser, selectedGroup } = useChatContext();
   const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -22,7 +22,7 @@ const Home = () => {
     <div className="border w-full h-screen sm:py-[1%] sm:px-[1%] overflow-hidden">
       <div
         className={`backdrop-blur-xl border-2 border-gray-600 rounded-2xl overflow-hidden h-full relative grid ${
-          selectedUser
+          selectedUser || selectedGroup
             ? "grid-cols-1 md:grid-cols-[1fr_1.5fr_1fr] xl:grid-cols-[1fr_2fr_1fr]"
             : "grid-cols-1 md:grid-cols-2"
         }`}
@@ -36,11 +36,11 @@ const Home = () => {
         )}
 
         {/* On mobile: show ChatContainer only if user is selected */}
-        {isMobile && selectedUser && !showRightSidebar && (
+        {isMobile && (selectedUser || selectedGroup) && !showRightSidebar && (
           <ChatContainer onHeaderClick={() => setShowRightSidebar(true)} />
         )}
 
-        {selectedUser && (showRightSidebar || !isMobile) && (
+        {(selectedUser || selectedGroup) && (showRightSidebar || !isMobile) && (
           <RightSidebar
             onClose={() => setShowRightSidebar(false)}
             isMobile={isMobile}

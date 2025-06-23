@@ -1,9 +1,11 @@
 import express from "express";
 import { protectRoute } from "../middleware/auth.js";
 import {
+  getGroupMessages,
   getMessages,
   getUserForSidebar,
   markMessageAsSeen,
+  sendGroupMessage,
   sendMessage,
 } from "../controllers/messageController.js";
 
@@ -13,3 +15,5 @@ messageRouter.get("/users", protectRoute, getUserForSidebar);
 messageRouter.get("/:id", protectRoute, getMessages);
 messageRouter.put("/mark/:id", protectRoute, markMessageAsSeen);
 messageRouter.post("/send/:id", protectRoute, sendMessage);
+messageRouter.post("/group/send/:groupId", protectRoute, sendGroupMessage);
+messageRouter.get("/group/:groupId", getGroupMessages);

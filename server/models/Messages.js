@@ -9,12 +9,12 @@ const messagesSchema = new mongoose.Schema(
     },
     receiver_id: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       ref: "user",
     },
     text: { type: String },
     image: { type: String },
     seen: { type: Boolean, default: false },
+    groupId: { type: mongoose.Schema.Types.ObjectId, ref: "group" },
   },
   { timestamps: true }
 );

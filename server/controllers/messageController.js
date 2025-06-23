@@ -3,6 +3,7 @@ import { User } from "../models/User.js";
 import { io, userSocketMap } from "../server.js";
 import mongoose from "mongoose";
 import cloudinary from "../libs/cloudinary.js";
+import { Groups } from "../models/Group.js";
 
 //Get all uesrs except the logged in user
 export const getUserForSidebar = async (req, res) => {
@@ -103,5 +104,86 @@ export const sendMessage = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.json({ success: false, message: error.message });
+  }
+};
+
+//sendGroup messages /api/messages/group/send:groupId
+
+export const sendGroupMessage = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { text, image } = req.body;
+    const sender_id = req.user._id;
+
+    if (!text && !image) {
+      return res.json({ success: false, message: "Empty messsage" });
+    }
+
+    let imageUrl;
+    if (image) {
+      const uploadedImage = await cloudinary.uploader.upload(image);
+      imageUrl = uploadedImage.secure_url;
+    }
+
+    try {
+      const newMessage = await Messages.create({
+        sender_id,
+        text,
+        image: imageUrl,
+        groupId,
+      });
+
+      await newMessage.populate("sender_id", "profilePic fullName");
+
+      const senderSocketId = userSocketMap[sender_id];
+      if (senderSocketId) {
+        io.to(groupId)
+          .except(senderSocketId)
+          .emit("newGroupMessage", newMessage);
+      } else {
+        io.to(groupId).emit("newGroupMessage", newMessage);
+      }
+
+      /*  console.log(`Emitting message to group ${groupId}:`, newMessage);
+      io.to(groupId).emit("newGroupMessage", newMessage);
+ */
+      //get members of group (Except sender)
+      /* const group = await Groups.findById(groupId);
+      const otherMembers = group.members.filter(
+        (id) => id.toString() !== sender_id
+      ); */
+
+      // emit message to each members socket
+      /*    otherMembers.forEach((memberId) => {
+        const socketId = userSocketMap[memberId];
+        if (socketId) {
+          io.to(socketId).emit("newGroupMessage", newMessage);
+        }
+      });
+
+      io.to(groupId).emit("newGroupMessage", newMessage); */
+
+      res.json({ success: true, newMessage });
+    } catch (error) {
+      console.log(error);
+      return res.json({ success: false, message: error.message });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export const getGroupMessages = async (req, res) => {
+  const { groupId } = req.params;
+  try {
+    const messages = await Messages.find({ groupId })
+      .sort({ createdAt: 1 })
+      .populate("sender_id", "profilePic fullName");
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
   }
 };

@@ -1,0 +1,15 @@
+import express from "express";
+import { protectRoute } from "../middleware/auth.js";
+import {
+  createGroup,
+  getGroupUnreadCounts,
+  getUserGroups,
+  markGroupAsSeen,
+} from "../controllers/groupController.js";
+
+export const groupRouter = express.Router();
+
+groupRouter.post("/create", protectRoute, createGroup);
+groupRouter.get("/my-groups", protectRoute, getUserGroups);
+groupRouter.get("/unread-count", protectRoute, getGroupUnreadCounts);
+groupRouter.put("/:groupId/mark-seen", protectRoute, markGroupAsSeen);

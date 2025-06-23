@@ -1,0 +1,14 @@
+import mongoose, { modelNames } from "mongoose";
+
+const groupSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    members: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
+    createdBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
+    bio: { type: String },
+  },
+  { timestamps: true }
+);
+
+export const Groups =
+  mongoose.models.group || mongoose.model("group", groupSchema);
