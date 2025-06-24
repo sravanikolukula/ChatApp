@@ -173,6 +173,7 @@ const Sidebar = () => {
                   <div
                     key={index}
                     onClick={() => {
+                      setSelectedGroup(null);
                       setSelectedUser(user),
                         setUnseenMessages((prev) => ({
                           ...prev,
