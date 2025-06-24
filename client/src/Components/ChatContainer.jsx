@@ -25,11 +25,8 @@ const ChatContainer = ({ onHeaderClick }) => {
   } = useChatContext();
 
   const { authUser, onlineUsers, socket, axios } = useAuthContext();
-
   const scrollEnd = useRef();
-
   const [input, setInput] = useState("");
-
   const typingTimeoutRef = useRef(null);
 
   // Handle sending a message
@@ -44,7 +41,6 @@ const ChatContainer = ({ onHeaderClick }) => {
         groupId: selectedGroup._id,
       });
     }
-
     setInput("");
   };
 
@@ -133,12 +129,12 @@ const ChatContainer = ({ onHeaderClick }) => {
       <p className="text-lg font-medium text-white">Chat anytime,anywhere</p>
     </div>
   ) : (
-    <div className="hide-scrollbar realtive h-full backdrop-blur-lg overflow-y-scroll">
+    <div className=" hide-scrollbar realtive h-full backdrop-blur-lg overflow-y-scroll">
       <div
         onClick={() => {
           onHeaderClick();
         }}
-        className="flex items-center gap-3 mx-4 py-2 border-b  border-stone-500 "
+        className=" flex items-center gap-3 mx-4 py-2 border-b  border-stone-500 "
       >
         <img
           src={
@@ -194,6 +190,16 @@ const ChatContainer = ({ onHeaderClick }) => {
                 ? msg.sender_id._id
                 : msg.sender_id;
 
+            const isSelf = senderId === authUser._id;
+
+            const senderProfilePic = isSelf
+              ? authUser.profilePic
+              : selectedGroup
+              ? typeof msg.sender_id === "object"
+                ? msg.sender_id.profilePic
+                : assets.avatar_icon
+              : selectedUser?.profilePic;
+
             return (
               <div
                 key={index}
@@ -221,9 +227,10 @@ const ChatContainer = ({ onHeaderClick }) => {
                 <div className="text-center text-xs">
                   <img
                     src={
-                      senderId === authUser._id
+                      senderProfilePic || assets.avatar_icon
+                      /*           senderId === authUser._id
                         ? authUser.profilePic || assets.avatar_icon
-                        : msg.sender_id?.profilePic || assets.avatar_icon
+                        : msg.sender_id?.profilePic || assets.avatar_icon */
                     }
                     alt="profile-pic"
                     className="w-7 rounded-full"

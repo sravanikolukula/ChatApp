@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import assets from "../assets/assets.js";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
-import { useChatContext } from "../context/ChatContext";
+import { useChatContext } from "../context/ChatContext.jsx";
 import toast from "react-hot-toast";
 import axios from "axios";
 

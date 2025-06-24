@@ -14,8 +14,9 @@ export const ChatProvider = ({ children }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groupMessages, setGroupMessages] = useState([]);
   const [unseenGroupMessages, setUnseenGroupMessages] = useState({});
+  const [isTypingGrp, setIsTypingGrp] = useState("");
 
-  const { axios, socket } = useAuthContext();
+  const { axios, socket, authUser } = useAuthContext();
 
   //function to get users for sidebar
   const getUsers = async () => {
@@ -173,7 +174,7 @@ export const ChatProvider = ({ children }) => {
     const handleNewGroupMessage = (newMessage) => {
       if (selectedGroup && newMessage.groupId === selectedGroup._id) {
         setGroupMessages((prev) => [
-          ...ChatContext(Array.isArray(prev) ? prev : []),
+          ...(Array.isArray(prev) ? prev : []),
           newMessage,
         ]);
       }
@@ -204,19 +205,42 @@ export const ChatProvider = ({ children }) => {
       }
     };
 
+    const handleGroupTyping = ({ fromUserId, fullName, groupId }) => {
+      if (
+        selectedGroup &&
+        selectedGroup._id === groupId &&
+        fromUserId !== authUser._id
+      ) {
+        setIsTypingGrp(fullName);
+      }
+    };
+
+    const handleGroupStopTyping = ({ fromUserId, groupId }) => {
+      if (
+        selectedGroup &&
+        selectedGroup._id === groupId &&
+        fromUserId !== authUser._id
+      ) {
+        setIsTypingGrp("");
+      }
+    };
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
     socket.on("newGroupMessage", handleNewGroupMessage);
     socket.on("newMessage", handleNewMessage);
+    socket.on("group-typing", handleGroupTyping);
+    socket.on("group-stopTyping", handleGroupStopTyping);
 
     return () => {
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
       socket.off("newGroupMessage", handleNewGroupMessage);
       socket.off("newMessage", handleNewMessage);
+      socket.off("group-typing", handleGroupTyping);
+      socket.off("group-stopTyping", handleGroupStopTyping);
       unSubScribeToMessage();
     };
-  }, [socket, selectedUser]);
+  }, [socket, selectedUser, selectedGroup]);
 
   useEffect(() => {
     if (socket && selectedGroup?._id) {
@@ -247,6 +271,7 @@ export const ChatProvider = ({ children }) => {
     unseenGroupMessages,
     setUnseenGroupMessages,
     updateGroup,
+    isTypingGrp,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
