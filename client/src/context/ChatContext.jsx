@@ -63,10 +63,8 @@ export const ChatProvider = ({ children }) => {
 
   //function to fetch grops
   const getGroups = async () => {
-    console.log("getGrpoups");
     try {
       const { data } = await axios.get("/api/group/my-groups");
-      console.log(data);
       if (data.success) {
         setGroups(data.groups);
       } else {
@@ -78,7 +76,6 @@ export const ChatProvider = ({ children }) => {
   };
 
   const getGroupMessages = async (groupId) => {
-    console.log("GroupMessages");
     try {
       const { data } = await axios.get(`/api/message/group/${groupId}`);
       if (data.success) {
@@ -114,6 +111,23 @@ export const ChatProvider = ({ children }) => {
     }
   };
 
+  const updateGroup = async (groupId, updatedData) => {
+    try {
+      const { data } = await axios.put(
+        `/api/group/update/${groupId}`,
+        updatedData
+      );
+      if (data.success) {
+        setSelectedGroup(data.group);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  };
+
   //function to subscribe to messages for selected user
   const subscribeToMessages = async () => {
     if (!socket) return;
@@ -134,7 +148,6 @@ export const ChatProvider = ({ children }) => {
     });
     socket.on("newGroupMessage", (newMessage) => {
       if (selectedGroup && newMessage.groupId === selectedGroup._id) {
-        console.log("Appending to groupMessages:", newMessage);
         setGroupMessages((prev) => [
           ...(Array.isArray(prev) ? prev : []),
           newMessage,
@@ -154,12 +167,6 @@ export const ChatProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (socket) {
-      console.log("✅ Socket connected:", socket.id);
-    }
-  }, [socket]);
-
-  useEffect(() => {
     if (!socket) return;
     // subscribeToMessages();
 
@@ -169,8 +176,6 @@ export const ChatProvider = ({ children }) => {
           ...ChatContext(Array.isArray(prev) ? prev : []),
           newMessage,
         ]);
-      } else {
-        console.log("Message for anothe group", newMessage.groupId);
       }
     };
 
@@ -241,6 +246,7 @@ export const ChatProvider = ({ children }) => {
     sendGroupMessage,
     unseenGroupMessages,
     setUnseenGroupMessages,
+    updateGroup,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

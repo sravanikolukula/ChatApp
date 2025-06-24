@@ -1,22 +1,52 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import assets from "../assets/assets";
-import { unstable_RouterContextProvider, useNavigate } from "react-router-dom";
+import {
+  unstable_RouterContextProvider,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
+import { useChatContext } from "../context/ChatContext";
 
 const Profile = () => {
+  const location = useLocation();
+  const isGroupProfile = location.pathname.includes("group-profile");
+
   const { authUser, updateProfile } = useAuthContext();
+  const { selectedGroup, updateGroup } = useChatContext();
 
   const [selectedImg, setSelectedImg] = useState(null);
-  const [name, setName] = useState(authUser.fullName);
-  const [bio, setBio] = useState(authUser.bio);
+
+  const [name, setName] = useState(
+    isGroupProfile ? selectedGroup?.name : authUser?.fullName
+  );
+  const [bio, setBio] = useState(
+    isGroupProfile ? selectedGroup?.bio : authUser?.bio
+  );
   const navigate = useNavigate();
 
   const onsubmitHandler = async (e) => {
     e.preventDefault();
 
-    if (!selectedImg) {
-      await updateProfile({ fullName: name, bio });
+    const updateData = {
+      ...(isGroupProfile ? { name } : { fullName: name }),
+      bio,
+    };
+
+    console.log("updatedData", updateData);
+    const processUpdate = async (data) => {
+      console.log(data);
+      if (isGroupProfile) {
+        console.log("update profile with profilepic");
+        await updateGroup(selectedGroup._id, data);
+      } else {
+        await updateProfile(data);
+      }
       navigate("/");
+    };
+
+    if (!selectedImg) {
+      await processUpdate(updateData);
       return;
     }
 
@@ -24,11 +54,18 @@ const Profile = () => {
     reader.readAsDataURL(selectedImg);
     reader.onload = async () => {
       const base64Img = reader.result;
-      await updateProfile({ profilePic: base64Img, fullName: name, bio });
-      navigate("/");
+      // await updateProfile({ profilePic: base64Img, fullName: name, bio });
+      // navigate("/");
+      await processUpdate({ ...updateData, profilePic: base64Img });
       return;
     };
   };
+
+  const displayImg = selectedImg
+    ? URL.createObjectURL(selectedImg)
+    : isGroupProfile
+    ? selectedGroup?.profilePic || assets.groupIcon
+    : authUser?.profilePic || assets.avatar_icon;
 
   return (
     <div className="min-h-screen bg-cover bg-no-repeat  flex items-center justify-center">
@@ -37,7 +74,9 @@ const Profile = () => {
           onSubmit={onsubmitHandler}
           className="flex flex-col gap-5 p-10 flex-1"
         >
-          <h3 className="text-lg">Profile details</h3>
+          <h3 className="text-lg">
+            {isGroupProfile ? "Group details" : "Profile details"}
+          </h3>
           <label
             htmlFor="avatar"
             className="flex items-center gap-3 cursor-pointer"
@@ -50,21 +89,17 @@ const Profile = () => {
               hidden
             />
             <img
-              src={
-                selectedImg
-                  ? URL.createObjectURL(selectedImg)
-                  : assets.avatar_icon
-              }
-              alt="profiel"
+              src={displayImg}
+              alt="profile"
               className={`w-12 h-12 ${selectedImg && "rounded-full"}`}
             />
-            Upload profile image
+            Upload {isGroupProfile ? "group" : "profile"} image
           </label>
           <input
             onChange={(e) => setName(e.target.value)}
             value={name}
             type="text"
-            placeholder="Your name"
+            placeholder={isGroupProfile ? "Group name" : "Your name"}
             className="p-2 border-2 border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
             required
           />
@@ -72,7 +107,7 @@ const Profile = () => {
             rows={4}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="Write profile bio"
+            placeholder={`Write ${isGroupProfile ? "group" : "profile"} bio`}
             className="p-2 border-2 border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
             required
           ></textarea>
@@ -85,7 +120,7 @@ const Profile = () => {
           </button>
         </form>
         <img
-          src={authUser?.profilePic || assets.logo_icon}
+          src={displayImg}
           className={`max-w-44 aspect-square rounded-full mx-10 max-sm:mt-10  ${
             selectedImg && "rounded-full"
           }`}

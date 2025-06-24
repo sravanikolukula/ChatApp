@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import assets, { imagesDummyData } from "../assets/assets.js";
 import { useChatContext } from "../context/ChatContext";
 import { useAuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const RightSidebar = ({ isMobile, onClose }) => {
   const { onlineUsers, logout } = useAuthContext();
@@ -14,15 +15,12 @@ const RightSidebar = ({ isMobile, onClose }) => {
     setSelectedGroup,
   } = useChatContext();
   const [msgImages, setMsgImages] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (selectedUser) {
       setMsgImages(messages.filter((msg) => msg.image).map((msg) => msg.image));
     } else {
-      console.log(groupMessages);
-      console.log(
-        groupMessages.filter((msg) => msg.image).map((msg) => msg.image)
-      );
       setMsgImages(
         groupMessages.filter((msg) => msg.image).map((msg) => msg.image)
       );
@@ -50,6 +48,13 @@ const RightSidebar = ({ isMobile, onClose }) => {
                 ? selectedUser.profilePic || assets.avatar_icon
                 : selectedGroup.profilePic || assets.groupIcon
             }
+            onClick={() => {
+              if (selectedGroup) {
+                navigate(`/group-profile/${selectedGroup._id}`);
+              } else {
+                navigate("/profile");
+              }
+            }}
             alt="profileIcon"
             className="w-20 aspect-[1/1] rounded-full cursor-pointer"
           />
@@ -62,7 +67,11 @@ const RightSidebar = ({ isMobile, onClose }) => {
             {selectedGroup && selectedGroup.name}
           </h1>
           <p className="px-10 m-auto">
-            {(selectedUser && selectedUser.bio) || "No bio"}
+            {selectedGroup
+              ? selectedGroup.bio
+              : selectedUser
+              ? selectedUser.bio
+              : ""}
           </p>
         </div>
         <hr className="border-[#ffffff50] my-4" />

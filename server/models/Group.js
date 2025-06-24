@@ -6,6 +6,7 @@ const groupSchema = new mongoose.Schema(
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
     createdBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
     bio: { type: String },
+    profilePic: { type: String, default: "" },
   },
   { timestamps: true }
 );

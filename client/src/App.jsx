@@ -26,6 +26,7 @@ const App = () => {
           path="/profile"
           element={authUser ? <Profile /> : <Navigate to="/login" />}
         />
+        <Route path="/group-profile/:id" element={<Profile />} />
       </Routes>
     </div>
   );

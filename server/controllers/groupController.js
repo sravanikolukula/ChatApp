@@ -1,6 +1,7 @@
 import { Groups } from "../models/Group.js";
 import { groupSeenStatus } from "../models/groupSeenStatusSchema.js";
 import { Messages } from "../models/Messages.js";
+import { v2 as cloudinary } from "cloudinary";
 
 export const createGroup = async (req, res) => {
   const { name, groupMembers } = req.body;
@@ -102,5 +103,37 @@ export const markGroupAsSeen = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
+  }
+};
+
+//update Group details
+export const updateGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { name, bio, profilePic } = req.body;
+
+    let updatedGroup;
+    if (!profilePic) {
+      await Groups.findByIdAndUpdate(groupId, { bio, name }, { new: true });
+    } else {
+      const upload = await cloudinary.uploader.upload(profilePic);
+      await Groups.findByIdAndUpdate(
+        groupId,
+        {
+          profilePic: upload.secure_url,
+          bio,
+          name,
+        },
+        { new: true }
+      );
+    }
+    res.json({
+      success: true,
+      group: updatedGroup,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
   }
 };
