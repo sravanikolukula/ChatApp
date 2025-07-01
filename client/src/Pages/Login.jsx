@@ -86,7 +86,7 @@ const Login = () => {
             rows={4}
             onChange={(e) => setBio(e.target.value)}
             value={bio}
-            placeholder="enter some small bio.."
+            placeholder="enter some  bio.."
             className="p-2  border-2  border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             required
           />

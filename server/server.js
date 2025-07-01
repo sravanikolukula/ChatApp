@@ -7,8 +7,7 @@ import { Server } from "socket.io";
 import { userRouter } from "./routes/userRoutes.js";
 import { messageRouter } from "./routes/messageRoutes.js";
 import { groupRouter } from "./routes/groupRoutes.js";
-import { Groups } from "./models/Group.js";
-import { group } from "console";
+import { Group } from "./models/Group.js";
 
 //create express app  and HTTP server
 const app = express();
@@ -25,16 +24,15 @@ export const userSocketMap = {}; //{userId,socketId}
 //socket io connectino Handler
 io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId;
-  console.log("User connected", userId);
 
   if (userId) userSocketMap[userId] = socket.id;
 
-  //fetch users groups and join their rooms
+  //Join all groups the user belongs t
   try {
-    const groups = await Groups.find({ members: userId }).select("_id");
+    const groups = await Group.find({ members: userId }).select("_id");
+
     groups.forEach((group) => {
       socket.join(group._id.toString());
-      console.log("User joined grp", userId, group._id);
     });
   } catch (error) {
     console.error("Error joining grp");
@@ -58,6 +56,7 @@ io.on("connection", async (socket) => {
     }
   });
 
+  //Group typing
   socket.on("group-typing", ({ groupId, fromUserId, fullName }) => {
     socket.to(groupId).emit("group-typing", {
       fromUserId,
@@ -73,22 +72,45 @@ io.on("connection", async (socket) => {
     });
   });
 
+  //if user joins a new grp after connection
   socket.on("joinGroup", (groupId) => {
     socket.join(groupId);
   });
 
+  socket.on("message-seen", ({ messageIds, senderId, receiverId }) => {
+    const senderSocketId = userSocketMap[senderId];
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("message-seen-update", {
+        messageIds,
+        receiverId,
+      });
+    }
+  });
+
+  socket.on("group-message-seen", ({ messageIds, senderId, groupId }) => {
+    const senderSocketId = userSocketMap[senderId];
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("group-seen-update", {
+        groupId,
+        senderId,
+        messageIds,
+      });
+    }
+  });
+
   socket.on("disconnect", () => {
     delete userSocketMap[userId];
-    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    io.emit("getOnlineUsers", Object.keys(userSocketMap)); //emit updated online users list
   });
 });
 
 //Middleware setup
-// app.use(express.json());
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-app.use(cors());
+app.use(express.json({ limit: "10mb" })); //Parses incoming requests with JSON payloads
+app.use(express.urlencoded({ extended: true, limit: "10mb" })); // Parses incoming requests with URL-encoded payloads (like HTML form data)
+// extended: true → allows nested objects in form data
+
+app.use(cors()); //allows backend to accept req from different origins
 
 app.use("/api/server", (req, res) => {
   res.send("Server is live");

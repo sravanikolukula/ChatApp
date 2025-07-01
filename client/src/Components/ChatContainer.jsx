@@ -4,6 +4,9 @@ import { formatMessageTime } from "../lib/utils";
 import { useChatContext } from "../context/ChatContext.jsx";
 import { useAuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faCheckDouble } from "@fortawesome/free-solid-svg-icons";
+
 import RightSidebar from "./RightSidebar.jsx";
 import { Socket } from "socket.io-client";
 
@@ -22,26 +25,33 @@ const ChatContainer = ({ onHeaderClick }) => {
     setSelectedGroup,
     getUnseenMsges,
     isTypingGrp,
+    draftMessages,
+    setDraftMessages,
   } = useChatContext();
 
   const { authUser, onlineUsers, socket, axios } = useAuthContext();
-  const scrollEnd = useRef();
-  const [input, setInput] = useState("");
-  const typingTimeoutRef = useRef(null);
+  const scrollEnd = useRef(); //Ref to auto-scroll to  the latest message
+  // const [input, setInput] = useState("");
+  const typingTimeoutRef = useRef(null); //Ref to bounce "typing" event
+
+  const chatId = selectedUser?._id || selectedGroup?._id;
+  const message = draftMessages[chatId] || "";
+
+  const inputRef = useRef();
 
   // Handle sending a message
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (input.trim() === "") return;
+    if (!message.trim()) return;
     if (selectedUser) {
-      await sendMessage({ text: input.trim() });
+      await sendMessage({ text: message.trim() });
     } else if (selectedGroup) {
       await sendGroupMessage({
-        text: input.trim(),
+        text: message.trim(),
         groupId: selectedGroup._id,
       });
     }
-    setInput("");
+    setDraftMessages((prev) => ({ ...prev, [chatId]: "" }));
   };
 
   //handle sending a image
@@ -55,6 +65,7 @@ const ChatContainer = ({ onHeaderClick }) => {
 
     reader.onloadend = async () => {
       if (selectedUser) {
+        setDraftMessages((prev) => ({ ...prev, [chatId]: "" }));
         await sendMessage({ image: reader.result });
       } else if (selectedGroup) {
         await sendGroupMessage({
@@ -66,7 +77,7 @@ const ChatContainer = ({ onHeaderClick }) => {
     reader.readAsDataURL(file);
   };
 
-  //handle typing
+  //Emit typing and stopTyping events with 2s delay
   const handleTyping = () => {
     if (!(selectedUser || selectedGroup) || !socket) return;
     if (selectedUser && socket) {
@@ -97,6 +108,7 @@ const ChatContainer = ({ onHeaderClick }) => {
     }
   };
 
+  //Mark group messages ass seen
   const markGroupSeen = async () => {
     try {
       const { data } = await axios.put(
@@ -107,29 +119,39 @@ const ChatContainer = ({ onHeaderClick }) => {
       toast.error(error.message);
     }
   };
+
+  //Fetch messages when a user or group is slected
   useEffect(() => {
     if (selectedUser) {
       getMessages(selectedUser._id);
     } else if (selectedGroup) {
       getGroupMessages(selectedGroup._id);
       markGroupSeen();
-      getUnseenMsges;
+      // getUnseenMsges();
     }
   }, [selectedUser, selectedGroup]);
 
+  //Auto scroll to the bottom when new msg arrive
   useEffect(() => {
     if (scrollEnd.current) {
       scrollEnd.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, groupMessages]);
 
+  //auto-focus on input field on chat change
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus();
+  }, [selectedGroup, selectedUser]);
+
+  // UI: Placeholder when no chat is selected
   return !(selectedUser || selectedGroup) ? (
     <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-500 bg-white/10 ">
       <img src={assets.logo_icon} alt="logo" className="max-w-16" />
       <p className="text-lg font-medium text-white">Chat anytime,anywhere</p>
     </div>
   ) : (
-    <div className=" hide-scrollbar realtive h-full backdrop-blur-lg overflow-y-scroll">
+    <div className=" hide-scrollbar relative h-full backdrop-blur-lg overflow-y-scroll">
+      {/* Chat header */}
       <div
         onClick={() => {
           onHeaderClick();
@@ -181,7 +203,7 @@ const ChatContainer = ({ onHeaderClick }) => {
           className="max-md:hidden max-w-5"
         />
       </div>
-      {/* Chat area*/}
+      {/* Chat messages*/}
       <div className="flex flex-col h-[calc(100%-120px)]  p-3 pb-6 overflow-y-scroll hide-scrollbar">
         {(selectedUser ? messages || [] : groupMessages || []).map(
           (msg, index) => {
@@ -207,37 +229,45 @@ const ChatContainer = ({ onHeaderClick }) => {
                   senderId !== authUser._id && "flex-row-reverse"
                 }`}
               >
+                {/* IMage message */}
                 {msg.image ? (
                   <img
                     src={msg.image}
                     className="max-w-[230px] border border-gray-700 rounded-lg mb-8 overflow-hidden "
                   />
                 ) : (
+                  /* Text messsage */
+
                   <p
                     className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
                       senderId === authUser._id
-                        ? "rounded-br-none"
-                        : "rounded-bl-none"
-                    }`}
+                        ? "rounded-br-none "
+                        : "rounded-bl-none "
+                    }`} //break-all= Forces line breaks anywhere within words if necessary to prevent overflow.
                   >
                     {msg.text}
                   </p>
                 )}
 
+                {/* Sender info and timestamp */}
                 <div className="text-center text-xs">
                   <img
-                    src={
-                      senderProfilePic || assets.avatar_icon
-                      /*           senderId === authUser._id
-                        ? authUser.profilePic || assets.avatar_icon
-                        : msg.sender_id?.profilePic || assets.avatar_icon */
-                    }
+                    src={senderProfilePic || assets.avatar_icon}
                     alt="profile-pic"
-                    className="w-7 rounded-full"
+                    className="w-7 h-7 rounded-full mx-auto"
                   />
-                  <p className="text-gray-500">
-                    {formatMessageTime(msg.createdAt)}
-                  </p>
+                  <div className={`flex items-center justify-center gap-2 `}>
+                    <p className="text-gray-500">
+                      {formatMessageTime(msg.createdAt)}{" "}
+                    </p>
+                    {senderId === authUser._id && (
+                      <FontAwesomeIcon
+                        icon={faCheckDouble}
+                        // className={` text-${msg.seen ? "blue-400" : "gray-400"}`}
+                        className={msg.seen ? "text-blue-400" : "text-gray-400"}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -246,26 +276,31 @@ const ChatContainer = ({ onHeaderClick }) => {
 
         <div ref={scrollEnd}></div>
       </div>{" "}
-      {/* ---bottom area---- */}
+      {/* ---Input area---- */}
       <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3">
         <div className="flex-1 flex items-center bg-gray-100/12 px-3 rounded-full">
           <input
+            ref={inputRef}
             onChange={(e) => {
-              setInput(e.target.value);
+              setDraftMessages((prev) => ({
+                ...prev,
+                [chatId]: e.target.value,
+              }));
               handleTyping();
-              console.log("handle typing");
             }}
             onKeyDown={(e) => (e.key === "Enter" ? handleSendMessage(e) : null)}
-            value={input}
+            //value={input}
+            value={message}
             type="text"
             placeholder="Send a message"
             className="flex-1 text-sm p-3 border-none rounded-lg outline-none text-white placeholder-gray-400"
           />
+          {/* Image upload input */}
           <input
             onChange={handleSendImage}
             type="file"
             id="image"
-            accept="image/png,image/jpg,image.jpeg"
+            accept="image.png,image.jpg,image.jpeg"
             hidden
           />
           <label htmlFor="image">
@@ -276,6 +311,8 @@ const ChatContainer = ({ onHeaderClick }) => {
             />
           </label>
         </div>
+
+        {/* Send button */}
         <img
           onClick={handleSendMessage}
           src={assets.send_button}

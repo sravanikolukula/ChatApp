@@ -16,4 +16,4 @@ messageRouter.get("/:id", protectRoute, getMessages);
 messageRouter.put("/mark/:id", protectRoute, markMessageAsSeen);
 messageRouter.post("/send/:id", protectRoute, sendMessage);
 messageRouter.post("/group/send/:groupId", protectRoute, sendGroupMessage);
-messageRouter.get("/group/:groupId", getGroupMessages);
+messageRouter.get("/group/:groupId", protectRoute, getGroupMessages);

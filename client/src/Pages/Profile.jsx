@@ -1,12 +1,9 @@
 import React, { useLayoutEffect, useState } from "react";
 import assets from "../assets/assets";
-import {
-  unstable_RouterContextProvider,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
 import { useChatContext } from "../context/ChatContext";
+import toast from "react-hot-toast";
 
 const Profile = () => {
   const location = useLocation();
@@ -33,11 +30,8 @@ const Profile = () => {
       bio,
     };
 
-    console.log("updatedData", updateData);
     const processUpdate = async (data) => {
-      console.log(data);
       if (isGroupProfile) {
-        console.log("update profile with profilepic");
         await updateGroup(selectedGroup._id, data);
       } else {
         await updateProfile(data);
@@ -50,14 +44,18 @@ const Profile = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.readAsDataURL(selectedImg);
+    const reader = new FileReader(); //creating object for FileReader
+    reader.readAsDataURL(selectedImg); // asking to  converting selectedImg to base64
+
     reader.onload = async () => {
+      //Executes after image is loaded succesfully
       const base64Img = reader.result;
-      // await updateProfile({ profilePic: base64Img, fullName: name, bio });
-      // navigate("/");
       await processUpdate({ ...updateData, profilePic: base64Img });
       return;
+    };
+    reader.onerror = (error) => {
+      console.error("File reading error:", error);
+      toast.error("File reading error:", error);
     };
   };
 

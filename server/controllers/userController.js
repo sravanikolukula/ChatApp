@@ -13,16 +13,19 @@ export const signup = async (req, res) => {
       return res.json({ successLtrue, message: "Missing Details" });
     }
 
+    //check if user alrady exists with the give email
     const existedUser = await User.findOne({ email });
 
     if (existedUser) {
       return res.json({ success: false, message: "User already exist" });
     }
 
+    //Generate salt for hashed password
     const salt = await bcrypt.genSalt(10);
 
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    //creatae new user un the database
     const user = await User.create({
       fullName,
       password: hashedPassword,
@@ -30,6 +33,7 @@ export const signup = async (req, res) => {
       email,
     });
 
+    //Generate JWT token using user ID
     const token = genToken(user._id);
 
     res.json({
@@ -53,14 +57,21 @@ export const login = async (req, res) => {
       return res.json({ success: false, message: "Missing Details" });
     }
 
+    //Look for the user with given email
     const user = await User.findOne({ email });
 
+    if (!user || !user.password) {
+      return res.json({ success: false, message: "Invalid Credentials" });
+    }
+
+    //compare the provided password with hashed password in DB
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
       return res.json({ success: false, message: "Invalid Credentials" });
     }
 
+    //Generate JWT token using user Id
     const token = genToken(user._id);
 
     res.json({
@@ -87,11 +98,20 @@ export const updateProfile = async (req, res) => {
     const userId = req.user._id;
 
     let updatedUser;
+
+    //if no new profilepic is provided,just update bio and name
     if (!profilePic) {
-      await User.findByIdAndUpdate(userId, { bio, fullName }, { new: true });
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { bio, fullName },
+        { new: true }
+      ); //Returns the updated document
     } else {
+      //If profile pic is provided ,upload it to cloudinary
       const upload = await cloudinary.uploader.upload(profilePic);
-      await User.findByIdAndUpdate(
+
+      //update user's profilePic URL along with other details
+      updatedUser = await User.findByIdAndUpdate(
         userId,
         {
           profilePic: upload.secure_url,

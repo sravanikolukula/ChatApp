@@ -13,9 +13,15 @@ const RightSidebar = ({ isMobile, onClose }) => {
     selectedGroup,
     groupMessages,
     setSelectedGroup,
+    handleExitGroup,
+    setShowAddMem,
   } = useChatContext();
   const [msgImages, setMsgImages] = useState([]);
   const navigate = useNavigate();
+  const [showMenu, setShowMenu] = useState(false);
+  const [groupMembers, setGroupMembers] = useState([]);
+
+  useEffect(() => {}, []);
 
   useEffect(() => {
     if (selectedUser) {
@@ -41,6 +47,54 @@ const RightSidebar = ({ isMobile, onClose }) => {
             className="absolute top-2 left-2  md:hidden invert max-w-7"
           />
         )}
+        {selectedGroup && (
+          <div className="absolute top-4 right-4">
+            <img
+              src={assets.menu_icon}
+              onClick={() => setShowMenu((prev) => !prev)}
+              alt="menu-icon"
+              className="max-h-5 cursor-pointer "
+            />
+
+            {showMenu && (
+              <div className="absolute right-4  mt-2 w-32 p-4 z-50 bg-[#282142] border border-gray-600  rounded-md shadow-lg ">
+                <p
+                  className="text-sm cursor-pointer  hover:bg-gray-200  rounded  hover:bg-gray-600/60  rounded"
+                  onClick={() => {
+                    if (selectedGroup) {
+                      navigate(`/group-profile/${selectedGroup._id}`);
+                      setShowMenu(false);
+                    }
+                  }}
+                >
+                  Edit profile
+                </p>
+                <hr className="my-2 border-t border-gray-500" />
+
+                <p
+                  className="text-sm cursor-pointer  hover:bg-gray-200 rounded  hover:bg-gray-600/60  rounded"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowAddMem(true);
+                  }}
+                >
+                  Add members
+                </p>
+                <hr className="my-2 border-t border-gray-500" />
+                <p
+                  className="text-sm cursor-pointer hover:bg-gray-600/60  rounded"
+                  onClick={() => {
+                    handleExitGroup();
+                    setShowMenu(false);
+                  }}
+                >
+                  Exit group
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="pt-6 flex flex-col items-center justify-center text-xs font-light gap-2">
           <img
             src={
@@ -48,13 +102,6 @@ const RightSidebar = ({ isMobile, onClose }) => {
                 ? selectedUser.profilePic || assets.avatar_icon
                 : selectedGroup.profilePic || assets.groupIcon
             }
-            onClick={() => {
-              if (selectedGroup) {
-                navigate(`/group-profile/${selectedGroup._id}`);
-              } else {
-                navigate("/profile");
-              }
-            }}
             alt="profileIcon"
             className="w-20 aspect-[1/1] rounded-full cursor-pointer"
           />

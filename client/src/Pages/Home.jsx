@@ -3,9 +3,12 @@ import Sidebar from "../Components/Sidebar.jsx";
 import ChatContainer from "../Components/ChatContainer.jsx";
 import RightSidebar from "../Components/RightSidebar.jsx";
 import { useChatContext } from "../context/ChatContext.jsx";
+import CreateGroup from "../Components/CreateGroup.jsx";
+import AddGrpMembers from "../Components/AddGrpMembers.jsx";
 
 const Home = () => {
-  const { selectedUser, selectedGroup } = useChatContext();
+  const { selectedUser, selectedGroup, isCreatingGroup, showAddMem } =
+    useChatContext();
   const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -27,7 +30,7 @@ const Home = () => {
             : "grid-cols-1 md:grid-cols-2"
         }`}
       >
-        <Sidebar />
+        {isCreatingGroup ? <CreateGroup /> : <Sidebar />}
 
         {/* ChatContainer logic */}
         {/* On desktop: always show ChatContainer */}
@@ -35,17 +38,21 @@ const Home = () => {
           <ChatContainer onHeaderClick={() => setShowRightSidebar(true)} />
         )}
 
-        {/* On mobile: show ChatContainer only if user is selected */}
+        {/* On mobile: show ChatContainer only if user or group is selected */}
         {isMobile && (selectedUser || selectedGroup) && !showRightSidebar && (
           <ChatContainer onHeaderClick={() => setShowRightSidebar(true)} />
         )}
 
-        {(selectedUser || selectedGroup) && (showRightSidebar || !isMobile) && (
-          <RightSidebar
-            onClose={() => setShowRightSidebar(false)}
-            isMobile={isMobile}
-          />
-        )}
+        {(selectedUser || selectedGroup) &&
+          (showRightSidebar || !isMobile) &&
+          (showAddMem ? (
+            <AddGrpMembers />
+          ) : (
+            <RightSidebar
+              onClose={() => setShowRightSidebar(false)}
+              isMobile={isMobile}
+            />
+          ))}
       </div>
     </div>
   );

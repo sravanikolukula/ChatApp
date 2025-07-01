@@ -5,6 +5,8 @@ import Login from "./Pages/Login";
 import Profile from "./Pages/Profile";
 import { Toaster } from "react-hot-toast";
 import { useAuthContext } from "./context/AuthContext";
+import CreateGroup from "./Components/CreateGroup";
+import AddGrpMembers from "./Components/AddGrpMembers";
 
 const App = () => {
   const navigate = useNavigate();
@@ -27,6 +29,8 @@ const App = () => {
           element={authUser ? <Profile /> : <Navigate to="/login" />}
         />
         <Route path="/group-profile/:id" element={<Profile />} />
+        <Route path="/create-group" element={<CreateGroup />} />
+        <Route path="/add-member" element={<AddGrpMembers />} />
       </Routes>
     </div>
   );
