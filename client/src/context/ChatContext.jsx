@@ -170,15 +170,12 @@ export const ChatProvider = ({ children }) => {
       if (data.success) {
         toast.success(data.message);
         setShowAddMem(false);
-        setSelectedGroup((prev) => ({
-          ...prev,
-          members: [...prev.members, data.newMember],
-        }));
       } else {
         toast.error(data.message);
       }
     } catch (error) {
       console.log(error);
+
       toast.error(error.message);
     }
   };
@@ -187,12 +184,16 @@ export const ChatProvider = ({ children }) => {
     if (!selectedGroup) return;
 
     try {
+      const temp = selectedGroup;
+      setSelectedGroup(null);
       const { data } = await axios.post(`/api/group/${selectedGroup._id}/exit`);
 
       if (data.success) {
         toast.success(data.message);
-        setSelectedGroup(null);
         getGroups();
+      } else {
+        setSelectedGroup(temp);
+        toast.error(data.message);
       }
     } catch (error) {
       console.log(error);
@@ -228,6 +229,19 @@ export const ChatProvider = ({ children }) => {
     });
     socket.on("newGroupMessage", (newMessage) => {
       if (selectedGroup && newMessage.groupId === selectedGroup._id) {
+        //Add curr userId to seenBy  if not already there
+
+        if (!newMessage.seenBy.includes(authUser._id)) {
+          newMessage.seenBy.push(authUser._id);
+
+          // Emit to backend to update seenBy in DB
+          socket.emit("mark-groupMessage-seen", {
+            messageId: newMessage._id,
+            userId: authUser._id,
+            senderId: newMessage.senderId,
+          });
+        }
+
         setGroupMessages((prev) => [
           ...(Array.isArray(prev) ? prev : []),
           newMessage,
@@ -239,12 +253,42 @@ export const ChatProvider = ({ children }) => {
         );
       }
     });
+
+    socket.on("group-Msgseen-update", ({ messageId, seenBy }) => {
+      setGroupMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId
+            ? { ...msg, seenBy: [...msg.seenBy, seenBy] }
+            : msg
+        )
+      );
+    });
   };
 
   //function to unsubscribe to message
   const unSubScribeToMessage = async () => {
     if (socket) socket.off("newMessage");
   };
+
+  useEffect(() => {
+    if (!socket) return; // socket not ready yet
+
+    socket.on("group-Msgseen-update", ({ messageId, seenBy }) => {
+      setGroupMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId
+            ? msg.seenBy.includes(seenBy)
+              ? msg
+              : { ...msg, seenBy: [...msg.seenBy, seenBy] }
+            : msg
+        )
+      );
+    });
+
+    return () => {
+      socket.off("group-Msgseen-update");
+    };
+  }, [socket]);
 
   useEffect(() => {
     if (!socket) return;
@@ -262,14 +306,70 @@ export const ChatProvider = ({ children }) => {
       setIsTypingGrp,
       axios,
     });
+
+    socket.on("user-joined", (newUser) => {
+      setUsers((prevUsers) => {
+        const alreadyExists = prevUsers.some(
+          (user) => user._id === newUser._id
+        );
+
+        if (!alreadyExists) return prevUsers;
+        return [...prevUsers, newUser.user];
+      });
+    });
+
+    socket.on("group-created", (newGroup) => {
+      setGroups((prevGroups) => {
+        const alreadyExists = prevGroups.some(
+          (group) => group._id === newGroup._id
+        );
+        if (alreadyExists) return prevGroups;
+        return [...prevGroups, newGroup];
+      });
+    });
+
+    socket.on("profile-update", (updatedUser) => {
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === updatedUser._id ? { ...user, ...updatedUser } : user
+        )
+      );
+      if (selectedUser?._id === updatedUser._id) {
+        setSelectedUser(updatedUser);
+      }
+    });
+
+    socket.on("group-profile-update", (updatedGroup) => {
+      setGroups((prevGroups) =>
+        prevGroups.map((group) =>
+          group._id === updatedGroup._id ? { ...group, ...updatedGroup } : group
+        )
+      );
+      if (selectedGroup?._id === updatedGroup._id) {
+        setSelectedGroup(updatedGroup);
+      }
+    });
+
+    socket.on("message-seen", ({ messageId, userId }) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg._id === messageId && !msg.seenBy.includes(userId)
+            ? { ...msg, seenBy: [...msg.seenBy, userId] }
+            : msg
+        )
+      );
+    });
+
     return () => {
       if (cleanup) cleanup(); //cleanup on unmount or dependency change
+      socket.off("group-created");
+      socket.off("profile-update");
+      socket.off("message-seen");
     };
   }, [socket, selectedUser, selectedGroup]);
 
   useEffect(() => {
     if (!socket) return;
-
     socket.on("message-seen-update", ({ messageIds }) => {
       setMessages((prevMessages) =>
         prevMessages.map((msg) =>
@@ -278,17 +378,13 @@ export const ChatProvider = ({ children }) => {
       );
     });
 
-    socket.on("group-seen-update", ({ senderId, messageIds }) => {
-      setGroupMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          messageIds.includes(msg._id) ? { ...msg, seen: true } : msg
-        )
-      );
+    socket.on("addedToGroup", (newGroup) => {
+      setGroups((prevGroup) => [...prevGroup, newGroup]);
     });
 
     return () => {
       socket.off("message-seen-update");
-      socket.off("group-seen-update");
+      socket.off("addedToGroup");
     };
   }, [socket]);
 
@@ -308,6 +404,56 @@ export const ChatProvider = ({ children }) => {
     }
   }, [selectedGroup, groupMessages]);
 
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("member-added", ({ groupId, newMember, message }) => {
+      setMessages((prev) => [...prev, message]);
+
+      if (selectedGroup?._id === groupId) {
+        setSelectedGroup((prev) => ({
+          ...prev,
+          members: [
+            ...prev.members,
+            { user: newMember, joinedAt: new Date().toISOString() },
+          ],
+        }));
+      }
+    });
+
+    socket.on("member-exited", ({ groupId, userId, exitMessage }) => {
+      setMessages((prev) => [...prev, exitMessage]);
+
+      setSelectedGroup((prevGroup) => {
+        if (!prevGroup || prevGroup._id !== groupId) return prevGroup;
+        return {
+          ...prevGroup,
+          members: prevGroup.members.filter(
+            (member) => member.user._id !== userId
+          ),
+        };
+      });
+    });
+
+    return () => {
+      socket.off("member-added");
+      socket.off("member-exited");
+    };
+  }, [selectedGroup]);
+  /* 
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("member-added", ({ groupId, newMember, message }) => {
+      if (selectedGroup?._id === groupId) {
+        setGroupMessages((prev) => [...prev, message]);
+      }
+    });
+
+    return () => {
+      socket.off("member-added");
+    };
+  }, [socket, selectedGroup]);
+ */
   useEffect(() => {
     if (socket && selectedGroup?._id) {
       socket.emit("joinGroup", selectedGroup._id);

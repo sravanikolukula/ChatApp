@@ -14,7 +14,6 @@ export const setupChatSocketEvents = (
   }
 ) => {
   if (!socket) return;
-  // subscribeToMessages();
 
   const handleNewMessage = (newMessage) => {
     if (selectedUser && newMessage.sender_id === selectedUser._id) {
@@ -43,6 +42,27 @@ export const setupChatSocketEvents = (
         ...(Array.isArray(prev) ? prev : []),
         newMessage,
       ]);
+      //Add curr userId to seenBy  if not already there
+      if (!newMessage.seenBy.includes(authUser._id)) {
+        newMessage.seenBy.push(authUser._id);
+
+        // Emit to backend to update seenBy in DB
+        socket.emit("mark-groupMessage-seen", {
+          messageId: newMessage._id,
+          userId: authUser._id,
+          senderId: newMessage.sender_id._id,
+        });
+      }
+
+      socket.on("group-Msgseen-update", ({ messageId, seenBy }) => {
+        setGroupMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === messageId
+              ? { ...msg, seenBy: [...msg.seenBy, seenBy] }
+              : msg
+          )
+        );
+      });
       socket.emit("group-message-seen", {
         messageIds: [newMessage._id],
         senderId: newMessage.sender_id._id,

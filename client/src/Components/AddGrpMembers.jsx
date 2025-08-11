@@ -43,7 +43,7 @@ const AddGrpMembers = () => {
           .toLowerCase()
           .includes(input.toLowerCase());
         const alreadyInGroup = selectedGroup?.members?.some(
-          (member) => member._id === user._id
+          (member) => member.user._id === user._id
         );
 
         const alreadySelected = selectedMembers.some(
@@ -54,9 +54,8 @@ const AddGrpMembers = () => {
       })
     : users.filter((user) => {
         const alreadyInGroup = selectedGroup?.members?.some(
-          (member) => member._id === user._id
+          (member) => member.user._id === user._id
         );
-
         const alreadySelected = selectedMembers.some(
           (member) => member._id === user._id
         );
@@ -76,7 +75,6 @@ const AddGrpMembers = () => {
           <div className="flex items-center gap-4">
             <img
               onClick={() => {
-                console.log("btn clicked");
                 setShowAddMem(false);
               }}
               src={assets.arrow_icon}

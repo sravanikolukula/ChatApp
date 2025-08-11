@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import assets, { imagesDummyData } from "../assets/assets.js";
+import assets from "../assets/assets.js";
 import { useChatContext } from "../context/ChatContext";
 import { useAuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const RightSidebar = ({ isMobile, onClose }) => {
-  const { onlineUsers, logout } = useAuthContext();
+  const { onlineUsers, logout, authUser } = useAuthContext();
   const {
     selectedUser,
     setSelectedUser,
@@ -19,9 +19,6 @@ const RightSidebar = ({ isMobile, onClose }) => {
   const [msgImages, setMsgImages] = useState([]);
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  const [groupMembers, setGroupMembers] = useState([]);
-
-  useEffect(() => {}, []);
 
   useEffect(() => {
     if (selectedUser) {
@@ -140,21 +137,27 @@ const RightSidebar = ({ isMobile, onClose }) => {
           <div className="mt-5 p-2">
             <p className="px-5 text-xs"> Group Members</p>
 
-            {selectedGroup.members.map((user, index) => (
-              <div
-                key={index}
-                className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm   hover:bg-[#282142]`}
-              >
-                <img
-                  src={user?.profilePic || assets.avatar_icon}
-                  alt="profile"
-                  className=" w-[35px] aspect-[1/1]  rounded-full  object-cover"
-                />
-                <div className="flex  flex-col leading-5">
-                  <p>{user.fullName}</p>
-                </div>
-              </div>
-            ))}
+            {selectedGroup.members.map((member, index) => {
+              const user = member.user;
+
+              if (user._id != authUser._id) {
+                return (
+                  <div
+                    key={index}
+                    className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm   hover:bg-[#282142]`}
+                  >
+                    <img
+                      src={user?.profilePic || assets.avatar_icon}
+                      alt="profile"
+                      className=" w-[35px] aspect-[1/1]  rounded-full  object-cover"
+                    />
+                    <div className="flex  flex-col leading-5">
+                      <p>{user.fullName}</p>
+                    </div>
+                  </div>
+                );
+              }
+            })}
           </div>
         )}
         <button

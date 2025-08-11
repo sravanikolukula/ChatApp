@@ -55,7 +55,7 @@ const CreateGroup = () => {
     >
       {/* Header section */}
       <div className="flex items-center justify-between">
-        <div className="flex   items-center gap-4">
+        <div className="flex items-center gap-4">
           <img
             src={assets.arrow_icon}
             alt="arrow icon"
@@ -82,7 +82,7 @@ const CreateGroup = () => {
           />
           <img
             src={assets.search_icon}
-            alt=""
+            alt="search-icon"
             className="max-w-3 absolute right-3 bottom-3 "
           />
         </div>
@@ -95,7 +95,7 @@ const CreateGroup = () => {
           value={groupName}
           onChange={(e) => setGroupName(e.target.value)}
           placeholder="Enter group name"
-          className="w-full p-2 pr-20 border border-gray-500 rounded bg-transparent text-white placeholder-gray-400"
+          className="w-full p-2 pr-20 border border-gray-500 rounded bg-transparent text-white placeholder-gray-400 outline-none"
         />
         <button
           onClick={handleCreateGroup}

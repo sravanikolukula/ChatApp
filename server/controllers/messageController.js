@@ -4,6 +4,7 @@ import { io, userSocketMap } from "../server.js";
 import mongoose from "mongoose";
 import cloudinary from "../libs/cloudinary.js";
 import { groupSeenStatus } from "../models/groupSeenStatusSchema.js";
+import { Group } from "../models/Group.js";
 
 //Get all uesrs except the logged in user
 export const getUserForSidebar = async (req, res) => {
@@ -130,6 +131,12 @@ export const sendGroupMessage = async (req, res) => {
       return res.json({ success: false, message: "Empty messsage" });
     }
 
+    const group = await Group.findById(groupId).populate("members.user");
+
+    const membersAtSendTime = group.members
+      .filter((m) => new Date(m.joinedAt) <= new Date())
+      .map((m) => m.user._id);
+
     let imageUrl;
     //if an image, upload to  cloudinary
     if (image) {
@@ -144,9 +151,11 @@ export const sendGroupMessage = async (req, res) => {
         text,
         image: imageUrl,
         groupId,
+        membersAtSendTime,
       });
 
       await newMessage.populate("sender_id", "profilePic fullName");
+      await newMessage.populate("membersAtSendTime", "fullName profilePic");
 
       //Get sender's socket id
       const senderSocketId = userSocketMap[sender_id];
@@ -171,49 +180,80 @@ export const sendGroupMessage = async (req, res) => {
 };
 
 export const getGroupMessages = async (req, res) => {
-  const userId = req.user._id;
+  const userId = new mongoose.Types.ObjectId(req.user._id);
   const { groupId } = req.params;
 
   try {
-    const messages = await Messages.find({ groupId })
+    // const user = await User.findById(userId);
+    const group = await Group.findById(groupId);
+    const memberData = group.members?.find(
+      (m) => m.user.toString() === userId.toString()
+    );
+
+    if (!memberData) throw new Error("User not in group");
+
+    const messages = await Messages.find({
+      groupId,
+      createdAt: { $gt: memberData.joinedAt },
+    })
       .sort({ createdAt: 1 })
-      .populate("sender_id", "profilePic fullName");
+      .populate("sender_id", "profilePic fullName")
+      .populate("membersAtSendTime", "fullName profilePic");
 
     const seenStatus = await groupSeenStatus.findOne({ groupId, userId });
 
-    const enrichedMessages = messages.map((msg) => ({
-      ...msg.toObject(),
-      seen: msg.createdAt <= seenStatus.lastSeenAt,
-    }));
-
+    //set seenStaus to group as now
     await groupSeenStatus.findOneAndUpdate(
       { userId, groupId },
       { $set: { lastSeenAt: new Date() } },
       { upsert: true }
     );
 
-    const justSeenMessages = messages
-      .filter((msg) => msg.createdAt <= new Date())
+    //unseenMessages.Filter unseen messages not sent by this user
+    const messageIdsToUpdate = messages
+      .filter(
+        (msg) =>
+          msg.sender_id._id?.toString() !== userId.toString() &&
+          !msg.seenBy?.includes(userId)
+      )
       .map((msg) => msg._id);
 
-    const sendersToNotify = [
-      ...new Set(messages.map((m) => m.sender_id._id.toString())),
-    ].filter((id) => id !== userId.toString());
+    // Update seenBy
+    if (messageIdsToUpdate.length > 0) {
+      await Messages.updateMany(
+        { _id: { $in: messageIdsToUpdate } },
+        { $addToSet: { seenBy: userId } }
+      );
+    }
 
-    sendersToNotify.forEach((senderId) => {
-      if (!senderId) return; // guard clause
+    //. Group message IDs by sender to reduce socket traffic
+    const senderToMessages = {};
 
+    messageIdsToUpdate.forEach((msgId) => {
+      const msg = messages.find((m) => m._id.equals(msgId));
+      if (!msg || !msg.sender_id._id) return;
+      const senderId = msg.sender_id._id?.toString();
+
+      if (!senderToMessages[senderId]) {
+        senderToMessages[senderId] = [];
+      }
+      senderToMessages[senderId].push(msg._id);
+    });
+
+    // Emit batched socket events per sender
+    Object.entries(senderToMessages).forEach(([senderId, msgIds]) => {
       const senderSocketId = userSocketMap[senderId];
       if (senderSocketId) {
-        io.to(senderSocketId).emit("group-seen-update", {
-          groupId,
-          senderId: userId,
-          messageIds: justSeenMessages,
-        });
+        io.to(senderSocketId).emit(
+          "update-msg-seenBy",
+          msgIds,
+          userId,
+          groupId
+        );
       }
     });
 
-    res.json({ success: true, messages: enrichedMessages });
+    res.json({ success: true, messages: messages });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });

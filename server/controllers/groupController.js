@@ -5,6 +5,7 @@ import { v2 as cloudinary } from "cloudinary";
 import { userSocketMap } from "../server.js";
 import { io } from "../server.js";
 import { User } from "../models/User.js";
+import { text } from "express";
 
 export const createGroup = async (req, res) => {
   const { name, groupMembers } = req.body;
@@ -14,10 +15,31 @@ export const createGroup = async (req, res) => {
   }
 
   try {
+    const now = new Date();
+
+    const membersWithJoinDate = groupMembers.map((id) => ({
+      user: id,
+      joinedAt: now,
+    }));
+
+    // add creator too
+    membersWithJoinDate.push({
+      user: createdBy,
+      joinedAt: now,
+    });
+
     const newGroup = await Group.create({
       name,
-      members: [...groupMembers, createdBy], // ...groupMembers spreads the existing members into a new array
+      members: membersWithJoinDate, // ...groupMembers spreads the existing members into a new array
       createdBy,
+      admins: req.user.id,
+    });
+
+    groupMembers.map((userId) => {
+      const socketId = userSocketMap[userId];
+      if (socketId) {
+        io.to(socketId).emit("group-created", newGroup);
+      }
     });
 
     return res.json({
@@ -36,15 +58,19 @@ export const getUserGroups = async (req, res) => {
     const userId = req.user._id;
 
     //find all the groups where current user is a member
-    const groups = await Group.find({ members: userId }).populate(
-      "members",
+    const groups = await Group.find({ "members.user": userId }).populate(
+      "members.user",
       "fullName profilePic"
     );
-
     const unseenMessages = {};
 
     //For each group:calculating unseen msges
     const promises = groups.map(async (group) => {
+      const memberData = group.members.find(
+        (m) => m.user._id.toString() === userId.toString()
+      );
+      const joinedAt = memberData?.joinedAt || new Date(0);
+
       //find the last seen for this user in this group
       const seen = await groupSeenStatus.findOne({
         groupId: group._id,
@@ -53,10 +79,12 @@ export const getUserGroups = async (req, res) => {
 
       const lastSeenAt = seen?.lastSeenAt || new Date(0); // if not found, assume never seen
 
+      const cutoffTime = lastSeenAt > joinedAt ? lastSeenAt : joinedAt;
+
       //count how many messages are created after last seen time
       const count = await Messages.countDocuments({
         groupId: group._id,
-        createdAt: { $gt: lastSeenAt },
+        createdAt: { $gt: cutoffTime },
         sender_id: { $ne: userId }, //exclused users own message.
       });
 
@@ -69,7 +97,7 @@ export const getUserGroups = async (req, res) => {
     res.json({ success: true, groups, unseenMessages });
   } catch (error) {
     console.log(error);
-    res.json({ success });
+    res.json({ success: false, message: error.message });
   }
 };
 
@@ -77,7 +105,7 @@ export const getUserGroups = async (req, res) => {
 export const getGroupUnreadCounts = async (req, res) => {
   try {
     const userId = req.user._id;
-    const groups = await Group.find({ members: userId });
+    const groups = await Group.find({ "members.user": userId });
 
     const unseenMessages = {};
     await Promise.all(
@@ -130,11 +158,15 @@ export const updateGroup = async (req, res) => {
 
     let updatedGroup;
     if (!profilePic) {
-      await Group.findByIdAndUpdate(groupId, { bio, name }, { new: true });
+      updateGroup = await Group.findByIdAndUpdate(
+        groupId,
+        { bio, name },
+        { new: true }
+      );
     } else {
       //if an image,upload to cloudinary
       const upload = await cloudinary.uploader.upload(profilePic);
-      await Group.findByIdAndUpdate(
+      updatedGroup = await Group.findByIdAndUpdate(
         groupId,
         {
           profilePic: upload.secure_url,
@@ -144,7 +176,8 @@ export const updateGroup = async (req, res) => {
         { new: true }
       );
     }
-    res.json({
+    io.emit("group-profile-update", updatedGroup);
+    return res.json({
       success: true,
       group: updatedGroup,
       message: "Profile updated successfully",
@@ -166,37 +199,55 @@ export const addMembersToGroup = async (req, res) => {
       return res.json({ success: false, message: "Group doesnt exist" });
     }
 
-    /*     if (!group.admins.includes(currentUserId)) {
-      return res.json({
-        success: false,
-        message: "Only Admins can add members",
-      });
-    }
- */
-    if (group.members.includes(userId)) {
-      return res.json({
-        success: false,
+    // if (!group.admins.includes(currentUserId)) {
+    //   return res.json({
+    //     success: false,
+    //     message: "Only Admins can add members",
+    //   });
+    // }
 
+    if (
+      group.members.some(
+        (member) => member.user.toString() === userId.toString()
+      )
+    ) {
+      return res.json({
+        success: false,
         message: "User is already a member of the group",
       });
     }
 
     //Add user
-    group.members.push(userId);
+    group.members.push({ user: userId, joinedAt: Date.now() });
     await group.save();
 
     const newMember = await User.findById(userId).select("-password");
 
+    const joinMessage = new Messages({
+      sender_id: userId,
+      groupId: groupId,
+      text: `${newMember.fullName} joined the group`,
+      type: "system",
+      membersAtSendTime: group.members.map((m) => m.user),
+    });
+
+    await joinMessage.save();
+
     const socketId = userSocketMap[userId];
     if (socketId) {
       io.to(socketId).emit("joinGroup", groupId);
+      io.to(socketId).emit("addedToGroup", group);
     }
 
-    io.to(groupId).emit("member-added", { groupId, newUserId: userId });
+    io.to(groupId).emit("member-added", {
+      groupId,
+      newMember: newMember,
+      message: joinMessage,
+    });
 
     return res.json({
       success: true,
-      newMember,
+      newMember: { user: newMember, joinedAt: Date.now(0) },
       message: "user Added to group successfully",
     });
   } catch (error) {
@@ -216,7 +267,11 @@ export const exitGroup = async (req, res) => {
     }
 
     //If user is not in the group
-    if (!group.members.includes(userId)) {
+    if (
+      !group.members.some(
+        (member) => member.user.toString() === userId.toString()
+      )
+    ) {
       return res.json({
         success: false,
         message: "You're not a member of this group",
@@ -224,16 +279,24 @@ export const exitGroup = async (req, res) => {
     }
 
     group.members = group.members.filter(
-      (memberId) => memberId.toString() !== userId.toString()
+      (m) => m.user.toString() !== userId.toString()
     );
-
-    /*    group.admins = group.admins.filter(
-      (adminId) => adminId.toString() !== userId.toString()
-    ); */
 
     await group.save();
 
-    io.to(groupId).emit("member-exited", { groupId, userId });
+    const user = await User.findById(userId);
+
+    const exitMessage = new Messages({
+      sender_id: userId,
+      groupId: groupId,
+      text: `${user.fullName} left`,
+      type: "system",
+      membersAtSendTime: group.members.map((m) => m.user),
+    });
+
+    await exitMessage.save();
+
+    io.to(groupId).emit("member-exited", { groupId, userId, exitMessage });
 
     return res.json({ success: true, message: "You have exited the group." });
   } catch (error) {

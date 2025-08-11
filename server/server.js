@@ -8,6 +8,10 @@ import { userRouter } from "./routes/userRoutes.js";
 import { messageRouter } from "./routes/messageRoutes.js";
 import { groupRouter } from "./routes/groupRoutes.js";
 import { Group } from "./models/Group.js";
+import { userInfo } from "os";
+import { User } from "./models/User.js";
+import { Messages } from "./models/Messages.js";
+import { getGroupMessages } from "./controllers/messageController.js";
 
 //create express app  and HTTP server
 const app = express();
@@ -25,11 +29,25 @@ export const userSocketMap = {}; //{userId,socketId}
 io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId;
 
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    //add user
+    userSocketMap[userId] = socket.id;
 
-  //Join all groups the user belongs t
+    const user = await User.findById(userId).select("-password");
+
+    if (user) {
+      io.emit("user-joined", { user });
+    }
+
+    io.emit("update-user-list", Object.keys(userInfo));
+
+    //Emit to all clients
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  }
+
+  //Join all groups the user belongs to.
   try {
-    const groups = await Group.find({ members: userId }).select("_id");
+    const groups = await Group.find({ "members.user": userId }).select("_id");
 
     groups.forEach((group) => {
       socket.join(group._id.toString());
@@ -86,20 +104,60 @@ io.on("connection", async (socket) => {
       });
     }
   });
+  socket.on(
+    "mark-groupMessage-seen",
+    async ({ messageId, userId, senderId }) => {
+      try {
+        await Messages.updateOne(
+          { _id: messageId },
+          { $addToSet: { seenBy: userId } }
+        );
 
-  socket.on("group-message-seen", ({ messageIds, senderId, groupId }) => {
-    const senderSocketId = userSocketMap[senderId];
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("group-seen-update", {
+        //emit to sender
+        const senderSocketId = userSocketMap[senderId];
+        if (senderSocketId) {
+          io.to(senderSocketId).emit("group-Msgseen-update", {
+            messageId,
+            seenBy: userId,
+          });
+        }
+      } catch (error) {
+        console.error("Error marking group message as seen:", error);
+      }
+    }
+  );
+
+  socket.on("group-message-seen", async ({ messageIds, groupId, userId }) => {
+    try {
+      const updatedMessages = [];
+
+      for (const messageId of messageIds) {
+        const message = await Messages.findById(messageId);
+
+        if (message && !message.seenBy.includes(userId)) {
+          message.seenBy.push(userId);
+          await message.save();
+          updatedMessages.push({
+            _id: message._id,
+            seenBy: message.seenBy, // Only send what frontend needs
+          });
+        }
+      }
+
+      // Emit updated messages to the group
+      io.to(groupId).emit("group-seen-update", {
         groupId,
-        senderId,
-        messageIds,
+        userId,
+        messages: updatedMessages,
       });
+    } catch (error) {
+      console.error("Group seen update error:", error.message);
     }
   });
 
   socket.on("disconnect", () => {
     delete userSocketMap[userId];
+    io.emit("update-user-list", Object.keys(userSocketMap));
     io.emit("getOnlineUsers", Object.keys(userSocketMap)); //emit updated online users list
   });
 });

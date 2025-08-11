@@ -133,9 +133,9 @@ const Sidebar = () => {
             ></div>
           </div>
         </div>
-        {/* </div> */}
+
         {/* ----Contacts List---- */}
-        <div className="flex flex-col overflow-y-auto">
+        <div className="hide-scrollbar flex flex-col overflow-y-auto max-h-[calc(100vh-250px)]">
           {!isGroups
             ? filteredUsers.map((user, index) => (
                 <ContactCard

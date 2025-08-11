@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import assets, { messagesDummyData } from "../assets/assets";
+import assets from "../assets/assets";
 import { formatMessageTime } from "../lib/utils";
 import { useChatContext } from "../context/ChatContext.jsx";
 import { useAuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faCheckDouble } from "@fortawesome/free-solid-svg-icons";
-
-import RightSidebar from "./RightSidebar.jsx";
-import { Socket } from "socket.io-client";
+import { faCheckDouble } from "@fortawesome/free-solid-svg-icons";
+import MessageInfoModel from "./MessageInfoModel.jsx";
 
 const ChatContainer = ({ onHeaderClick }) => {
   const {
@@ -20,6 +18,7 @@ const ChatContainer = ({ onHeaderClick }) => {
     isTyping,
     selectedGroup,
     groupMessages,
+    setGroupMessages,
     getGroupMessages,
     sendGroupMessage,
     setSelectedGroup,
@@ -30,6 +29,10 @@ const ChatContainer = ({ onHeaderClick }) => {
   } = useChatContext();
 
   const { authUser, onlineUsers, socket, axios } = useAuthContext();
+
+  const [selectedMsg, setSelectedMsg] = useState(null);
+  const [showMsgInfo, setShowMsgInfo] = useState(false);
+
   const scrollEnd = useRef(); //Ref to auto-scroll to  the latest message
   // const [input, setInput] = useState("");
   const typingTimeoutRef = useRef(null); //Ref to bounce "typing" event
@@ -108,7 +111,7 @@ const ChatContainer = ({ onHeaderClick }) => {
     }
   };
 
-  //Mark group messages ass seen
+  //Mark group messages as seen
   const markGroupSeen = async () => {
     try {
       const { data } = await axios.put(
@@ -124,12 +127,14 @@ const ChatContainer = ({ onHeaderClick }) => {
   useEffect(() => {
     if (selectedUser) {
       getMessages(selectedUser._id);
-    } else if (selectedGroup) {
-      getGroupMessages(selectedGroup._id);
-      markGroupSeen();
-      // getUnseenMsges();
     }
-  }, [selectedUser, selectedGroup]);
+  }, [selectedUser]);
+
+  useEffect(() => {
+    if (!selectedGroup) return;
+    getGroupMessages(selectedGroup._id);
+    markGroupSeen();
+  }, [selectedGroup]);
 
   //Auto scroll to the bottom when new msg arrive
   useEffect(() => {
@@ -142,6 +147,31 @@ const ChatContainer = ({ onHeaderClick }) => {
   useEffect(() => {
     if (inputRef.current) inputRef.current.focus();
   }, [selectedGroup, selectedUser]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleSeenUpdate = (msgIds, seenByUser, groupId) => {
+      setGroupMessages((prev) =>
+        prev.map((msg) => {
+          if (msgIds.includes(msg._id)) {
+            if (!msg.seenBy.includes(seenByUser)) {
+              return {
+                ...msg,
+                seenBy: [...msg.seenBy, seenByUser],
+              };
+            }
+          }
+          return msg;
+        })
+      );
+    };
+
+    socket.on("update-msg-seenBy", handleSeenUpdate);
+
+    return () => {
+      socket.off("update-msg-seenBy", handleSeenUpdate);
+    };
+  }, [socket]);
 
   // UI: Placeholder when no chat is selected
   return !(selectedUser || selectedGroup) ? (
@@ -156,7 +186,7 @@ const ChatContainer = ({ onHeaderClick }) => {
         onClick={() => {
           onHeaderClick();
         }}
-        className=" flex items-center gap-3 mx-4 py-2 border-b  border-stone-500 "
+        className="flex items-center gap-3 mx-4 py-2 border-b  border-stone-500 "
       >
         <img
           src={
@@ -207,6 +237,17 @@ const ChatContainer = ({ onHeaderClick }) => {
       <div className="flex flex-col h-[calc(100%-120px)]  p-3 pb-6 overflow-y-scroll hide-scrollbar">
         {(selectedUser ? messages || [] : groupMessages || []).map(
           (msg, index) => {
+            if (msg.type === "system") {
+              return (
+                <div
+                  key={index}
+                  className="text-center text-gray-400 my-1 text-xs"
+                >
+                  {msg.text}
+                </div>
+              );
+            }
+
             const senderId =
               typeof msg.sender_id === "object"
                 ? msg.sender_id._id
@@ -234,19 +275,54 @@ const ChatContainer = ({ onHeaderClick }) => {
                   <img
                     src={msg.image}
                     className="max-w-[230px] border border-gray-700 rounded-lg mb-8 overflow-hidden "
+                    onClick={() => {
+                      if (isSelf && selectedGroup) {
+                        setSelectedMsg(msg);
+                        setShowMsgInfo(true);
+                      }
+                    }}
                   />
                 ) : (
                   /* Text messsage */
-
                   <p
                     className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
                       senderId === authUser._id
                         ? "rounded-br-none "
                         : "rounded-bl-none "
                     }`} //break-all= Forces line breaks anywhere within words if necessary to prevent overflow.
+                    onClick={() => {
+                      if (isSelf && selectedGroup) {
+                        setSelectedMsg(msg);
+                        setShowMsgInfo(true);
+                      }
+                    }}
                   >
+                    {/*   {selectedGroup && senderId !== authUser._id && (
+                      <span className="font-semibold text-xs text-blue-300 block mb-1">
+                        {typeof msg.sender_id === "object"
+                          ? msg.sender_id.fullName
+                          : "Unknown User"}
+                      </span>
+                    )} */}
+                    {selectedGroup && senderId !== authUser._id && (
+                      <span className="font-semibold text-xs text-purple-300 block mb-1">
+                        {typeof msg.sender_id === "object"
+                          ? msg.sender_id.fullName
+                          : "Unknown User"}
+                      </span>
+                    )}
                     {msg.text}
                   </p>
+                )}
+
+                {showMsgInfo && selectedMsg && selectedGroup && (
+                  <MessageInfoModel
+                    message={selectedMsg}
+                    members={selectedMsg.membersAtSendTime}
+                    onClose={() => {
+                      setShowMsgInfo(false);
+                    }}
+                  />
                 )}
 
                 {/* Sender info and timestamp */}
@@ -263,8 +339,16 @@ const ChatContainer = ({ onHeaderClick }) => {
                     {senderId === authUser._id && (
                       <FontAwesomeIcon
                         icon={faCheckDouble}
-                        // className={` text-${msg.seen ? "blue-400" : "gray-400"}`}
-                        className={msg.seen ? "text-blue-400" : "text-gray-400"}
+                        className={
+                          !selectedGroup
+                            ? msg.seen
+                              ? "text-blue-400"
+                              : "text-gray-400"
+                            : msg.seenBy?.filter(Boolean).length >=
+                              (msg.membersAtSendTime?.length || 0) - 1
+                            ? "text-blue-400"
+                            : "text-gray-400"
+                        }
                       />
                     )}
                   </div>
@@ -276,7 +360,7 @@ const ChatContainer = ({ onHeaderClick }) => {
 
         <div ref={scrollEnd}></div>
       </div>{" "}
-      {/* ---Input area---- */}
+      {/* ---Input area---- */}m, \
       <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3">
         <div className="flex-1 flex items-center bg-gray-100/12 px-3 rounded-full">
           <input

@@ -3,6 +3,7 @@ import { genToken } from "../libs/utils.js";
 
 import { v2 as cloudinary } from "cloudinary";
 import { User } from "../models/User.js";
+import { io } from "../server.js";
 
 //Signup a new user
 export const signup = async (req, res) => {
@@ -61,14 +62,20 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user || !user.password) {
-      return res.json({ success: false, message: "Invalid Credentials" });
+      return res.json({
+        success: false,
+        message: "Invalid Credentials.user not found",
+      });
     }
 
     //compare the provided password with hashed password in DB
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      return res.json({ success: false, message: "Invalid Credentials" });
+      return res.json({
+        success: false,
+        message: "Invalid Credentials.Wrong password",
+      });
     }
 
     //Generate JWT token using user Id
@@ -121,6 +128,9 @@ export const updateProfile = async (req, res) => {
         { new: true }
       );
     }
+
+    io.emit("profile-update", updatedUser);
+
     res.json({
       success: true,
       user: updatedUser,
