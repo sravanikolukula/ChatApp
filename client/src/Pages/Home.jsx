@@ -7,9 +7,15 @@ import CreateGroup from "../Components/CreateGroup.jsx";
 import AddGrpMembers from "../Components/AddGrpMembers.jsx";
 
 const Home = () => {
-  const { selectedUser, selectedGroup, isCreatingGroup, showAddMem } =
-    useChatContext();
-  const [showRightSidebar, setShowRightSidebar] = useState(false);
+  const {
+    selectedUser,
+    selectedGroup,
+    isCreatingGroup,
+    showAddMem,
+    showRightSidebar,
+    setShowRightSidebar,
+  } = useChatContext();
+  // const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -44,6 +50,23 @@ const Home = () => {
         )}
 
         {(selectedUser || selectedGroup) &&
+          (isMobile ? (
+            (showRightSidebar || showAddMem) &&
+            (showAddMem ? (
+              <AddGrpMembers isMobile />
+            ) : (
+              <RightSidebar
+                isMobile
+                onClose={() => setShowRightSidebar(false)}
+              />
+            ))
+          ) : showAddMem ? (
+            <AddGrpMembers isMobile={false} />
+          ) : (
+            <RightSidebar isMobile={false} />
+          ))}
+
+        {/*        {(selectedUser || selectedGroup) &&
           (showRightSidebar || !isMobile) &&
           (showAddMem ? (
             <AddGrpMembers />
@@ -52,7 +75,7 @@ const Home = () => {
               onClose={() => setShowRightSidebar(false)}
               isMobile={isMobile}
             />
-          ))}
+          ))} */}
       </div>
     </div>
   );

@@ -14,7 +14,10 @@ const RightSidebar = ({ isMobile, onClose }) => {
     groupMessages,
     setSelectedGroup,
     handleExitGroup,
+    showAddMem,
     setShowAddMem,
+    showRightSidebar,
+    setShowRightSidebar,
   } = useChatContext();
   const [msgImages, setMsgImages] = useState([]);
   const navigate = useNavigate();
@@ -29,6 +32,7 @@ const RightSidebar = ({ isMobile, onClose }) => {
       );
     }
   }, [messages, groupMessages]);
+
   return (
     (selectedUser || selectedGroup) && (
       <div
@@ -73,6 +77,9 @@ const RightSidebar = ({ isMobile, onClose }) => {
                   onClick={() => {
                     setShowMenu(false);
                     setShowAddMem(true);
+                    if (isMobile) {
+                      setShowRightSidebar(true);
+                    }
                   }}
                 >
                   Add members
@@ -121,17 +128,21 @@ const RightSidebar = ({ isMobile, onClose }) => {
         <hr className="border-[#ffffff50] my-4" />
         <div className="px-5 text-xs">
           <p>Media</p>
-          <div className="mt-2 max-h-[200px] overflow-y-scroll grid grid-cols-2 gap-4 opacity-80">
-            {msgImages.map((url, index) => (
-              <div
-                key={index}
-                onClick={() => window.open(url)}
-                className="cursor:pointer rounded "
-              >
-                <img src={url} alt="" className="w-full rounded-md" />
-              </div>
-            ))}
-          </div>
+          {msgImages.length > 0 ? (
+            <div className="mt-2 max-h-[200px] overflow-y-scroll grid grid-cols-2 gap-4 opacity-80">
+              {msgImages.map((url, index) => (
+                <div
+                  key={index}
+                  onClick={() => window.open(url)}
+                  className="cursor:pointer rounded "
+                >
+                  <img src={url} alt="" className="w-full rounded-md" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-gray-400">No shared media</p>
+          )}
         </div>
         {selectedGroup && (
           <div className="mt-5 p-2">

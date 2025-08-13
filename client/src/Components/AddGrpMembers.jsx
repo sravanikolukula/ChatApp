@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useChatContext } from "../context/ChatContext";
 import assets from "../assets/assets.js";
 import toast from "react-hot-toast";
@@ -65,11 +65,7 @@ const AddGrpMembers = () => {
 
   return (
     showAddMem && (
-      <div
-        className={`bg-[#818582]/10 p-5 rounded-r-xl text-white  h-screen ${
-          selectedUser || selectedGroup ? "max-md:hidden" : ""
-        }`}
-      >
+      <div className="bg-[#818582]/10 p-5 h-full rounded-r-xl text-white">
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

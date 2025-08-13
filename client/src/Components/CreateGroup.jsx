@@ -49,7 +49,7 @@ const CreateGroup = () => {
 
   return (
     <div
-      className={`bg-[#818582]/10 h-full p-5 rounded-r-xl text-white ${
+      className={`bg-[#818582]/10 h-full p-5 rounded-r-xl text-white  h-screen${
         selectedUser || selectedGroup ? "max-md:hidden" : ""
       }`}
     >

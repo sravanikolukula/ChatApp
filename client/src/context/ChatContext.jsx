@@ -18,6 +18,7 @@ export const ChatProvider = ({ children }) => {
   const [unseenGroupMessages, setUnseenGroupMessages] = useState({});
   const [isTypingGrp, setIsTypingGrp] = useState("");
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [showAddMem, setShowAddMem] = useState(false);
   const [draftMessages, setDraftMessages] = useState({});
 
@@ -488,6 +489,8 @@ export const ChatProvider = ({ children }) => {
     setIsCreatingGroup,
     addMembersToGroup,
     handleExitGroup,
+    showRightSidebar,
+    setShowRightSidebar,
     showAddMem,
     setShowAddMem,
     draftMessages,

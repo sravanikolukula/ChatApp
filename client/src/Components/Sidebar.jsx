@@ -23,6 +23,7 @@ const Sidebar = () => {
     unseenGroupMessages,
     setUnseenGroupMessages,
     setIsCreatingGroup,
+    setShowAddMem,
   } = useChatContext();
   const [input, setInput] = useState("");
   const [showMenu, setShowMenu] = useState(false);
@@ -150,6 +151,7 @@ const Sidebar = () => {
                     if (showMenu) return;
                     setSelectedGroup(null);
                     setSelectedUser(user);
+                    setShowAddMem(false);
                     setUnseenMessages((prev) => ({ ...prev, [user._id]: 0 }));
                   }}
                 />
@@ -167,6 +169,7 @@ const Sidebar = () => {
                   onClick={() => {
                     if (showMenu) return;
                     setSelectedUser(null);
+                    setShowAddMem(false);
                     setSelectedGroup(group);
                     setUnseenGroupMessages((prev) => ({
                       ...prev,
