@@ -360,7 +360,7 @@ const ChatContainer = ({ onHeaderClick }) => {
 
         <div ref={scrollEnd}></div>
       </div>{" "}
-      {/* ---Input area---- */}m, \
+      {/* ---Input area---- */}
       <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3">
         <div className="flex-1 flex items-center bg-gray-100/12 px-3 rounded-full">
           <input
