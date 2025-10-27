@@ -65,17 +65,6 @@ const Home = () => {
           ) : (
             <RightSidebar isMobile={false} />
           ))}
-
-        {/*        {(selectedUser || selectedGroup) &&
-          (showRightSidebar || !isMobile) &&
-          (showAddMem ? (
-            <AddGrpMembers />
-          ) : (
-            <RightSidebar
-              onClose={() => setShowRightSidebar(false)}
-              isMobile={isMobile}
-            />
-          ))} */}
       </div>
     </div>
   );

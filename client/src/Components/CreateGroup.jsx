@@ -49,7 +49,7 @@ const CreateGroup = () => {
 
   return (
     <div
-      className={`bg-[#818582]/10 h-full p-5 rounded-r-xl text-white  h-screen${
+      className={`bg-[#818582]/10 h-full p-5 rounded-r-xl text-white ${
         selectedUser || selectedGroup ? "max-md:hidden" : ""
       }`}
     >
@@ -68,8 +68,9 @@ const CreateGroup = () => {
             className="max-w-7 max-h-7"
           />
           <div className="flex flex-col">
-            <h1 className="font-medium text-gray-200">New Group</h1>
-            <p className="text-sm text-gray-400 ">Add members</p>
+            <h1 className="font-medium text-[#EAEAEA]">New Group</h1>
+            {/* text-gray-200 */}
+            <p className="text-sm text-[#9B9B9B] ">Add members</p>
           </div>
         </div>
 
@@ -99,7 +100,7 @@ const CreateGroup = () => {
         />
         <button
           onClick={handleCreateGroup}
-          className="absolute top-1/2 right-2 -translate-y-1/2 py-1 px-3 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded"
+          className="absolute top-1/2 right-2 -translate-y-1/2 py-1 px-3 bg-gradient-to-r from-[#9E8CFF] to-[#CFC8FF] text-black text-sm font-medium rounded"
         >
           Create
         </button>
@@ -115,7 +116,7 @@ const CreateGroup = () => {
                 className="max-w-7 rounded-full"
               />
 
-              <p className="text-xs text-gray-400">{user.fullName}</p>
+              <p className="text-xs text-[#9B9B9B]">{user.fullName}</p>
             </div>
           ))}
         </div>
@@ -128,7 +129,7 @@ const CreateGroup = () => {
           return (
             <div
               key={user._id}
-              className={`relative flex items-center justify-between gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm  hover:bg-[#282142]`}
+              className={`relative flex items-center justify-between gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm  hover:bg-[#2E2E2E]`}
               onClick={() => {
                 if (alreadyAdded) {
                   setSelectedMembers((prev) =>
@@ -145,11 +146,11 @@ const CreateGroup = () => {
                   alt="profile"
                   className="w-[35px] aspect-[1/1] rounded-full object-cover"
                 />
-                <p className="text-gray-200">{user?.fullName}</p>
+                <p className="text-[#EAEAEA]">{user?.fullName}</p>
               </div>
               {alreadyAdded && (
                 <div className="mr-2 border border-gray-400 w-3 h-3 flex items-center justify-center rounded-full">
-                  <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#9E8CFF] to-[#CFC8FF]"></div>
                 </div>
               )}
             </div>

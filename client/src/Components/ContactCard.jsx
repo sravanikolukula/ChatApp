@@ -12,9 +12,9 @@ const ContactCard = ({
   return (
     <div
       onClick={onClick}
-      className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm ${
-        isSelected ? "bg-[#282142]/50" : ""
-      } hover:bg-[#282142]`}
+      className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer transition-colors duration-200 max-sm:text-sm ${
+        isSelected ? "bg-[#1E1E1E]" : ""
+      } hover:bg-[#2E2E2E]`}
     >
       <img
         src={image}
@@ -27,7 +27,7 @@ const ContactCard = ({
         {isOnline !== undefined && (
           <span
             className={`text-xs ${
-              isOnline ? "text-green-500 " : "text-amber-500"
+              isOnline ? "text-purple-300 " : "text-amber-500"
             }`}
           >
             {isOnline ? "Online" : "Offline"}
@@ -35,7 +35,7 @@ const ContactCard = ({
         )}
       </div>
       {unseenCount > 0 && (
-        <p className=" absolute top-4 right-4 h-5 w-5 text-xs flex justify-center items-center rounded-full bg-violet-500/50">
+        <p className=" absolute top-4 right-4 h-5 w-5 text-xs flex justify-center items-center rounded-full bg-[#9E8CFF] text-white">
           {unseenCount}
         </p>
       )}

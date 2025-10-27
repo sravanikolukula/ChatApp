@@ -98,7 +98,7 @@ const Profile = () => {
             value={name}
             type="text"
             placeholder={isGroupProfile ? "Group name" : "Your name"}
-            className="p-2 border-2 border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="p-2 border-2 border-gray-500  rounded-md focus:outline-none focus:ring-2 focus:ring-white-500 "
             required
           />
           <textarea
@@ -106,13 +106,15 @@ const Profile = () => {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder={`Write ${isGroupProfile ? "group" : "profile"} bio`}
-            className="p-2 border-2 border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="p-2 border-2 border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-white-500"
             required
           ></textarea>
 
           <button
             type="submit"
-            className="p-2 bg-gradient-to-r from-purple-400 to-violet-600 text-white rounded-full text-lg cursor-pointer"
+            className="p-2 bg-gradient-to-r
+            from-[#9E8CFF] to-gray-200 text-black hover:shadow-[0_0_10px_2px_rgba(255,255,255,0.4)]
+            rounded-full text-lg cursor-pointer"
           >
             Save
           </button>

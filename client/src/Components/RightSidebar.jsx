@@ -36,7 +36,7 @@ const RightSidebar = ({ isMobile, onClose }) => {
   return (
     (selectedUser || selectedGroup) && (
       <div
-        className={`bg-[#818582]/10 text-white w-full relative overflow-y-scroll hide-scrollbar ${
+        className={` text-white w-full relative overflow-y-scroll hide-scrollbar ${
           isMobile ? "block md:hidden" : "hidden md:block"
         }`}
       >
@@ -58,9 +58,12 @@ const RightSidebar = ({ isMobile, onClose }) => {
             />
 
             {showMenu && (
-              <div className="absolute right-4  mt-2 w-32 p-4 z-50 bg-[#282142] border border-gray-600  rounded-md shadow-lg ">
+              <div
+                className="absolute right-4  mt-2 w-32 p-4 z-20 
+              bg-[#1c1b1b] border border-gray-600 rounded-md shadow-lg "
+              >
                 <p
-                  className="text-sm cursor-pointer  hover:bg-gray-200  rounded  hover:bg-gray-600/60  rounded"
+                  className="text-sm cursor-pointer "
                   onClick={() => {
                     if (selectedGroup) {
                       navigate(`/group-profile/${selectedGroup._id}`);
@@ -73,7 +76,7 @@ const RightSidebar = ({ isMobile, onClose }) => {
                 <hr className="my-2 border-t border-gray-500" />
 
                 <p
-                  className="text-sm cursor-pointer  hover:bg-gray-200 rounded  hover:bg-gray-600/60  rounded"
+                  className="text-sm cursor-pointer  "
                   onClick={() => {
                     setShowMenu(false);
                     setShowAddMem(true);
@@ -86,7 +89,7 @@ const RightSidebar = ({ isMobile, onClose }) => {
                 </p>
                 <hr className="my-2 border-t border-gray-500" />
                 <p
-                  className="text-sm cursor-pointer hover:bg-gray-600/60  rounded"
+                  className="text-sm cursor-pointer "
                   onClick={() => {
                     handleExitGroup();
                     setShowMenu(false);
@@ -112,7 +115,7 @@ const RightSidebar = ({ isMobile, onClose }) => {
 
           <h1 className="px-10 text-md font-medium mx-auto  flex items-center gap-2">
             {selectedUser && onlineUsers.includes(selectedUser._id) && (
-              <p className="w-2 h-2 rounded-full bg-green-500"></p>
+              <p className="w-2 h-2 rounded-full bg-purple-400"></p>
             )}
             {selectedUser && selectedUser.fullName}
             {selectedGroup && selectedGroup.name}
@@ -141,7 +144,7 @@ const RightSidebar = ({ isMobile, onClose }) => {
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-gray-400">No shared media</p>
+            <p className="mt-2 text-[#9B9B9B]">No shared media</p>
           )}
         </div>
         {selectedGroup && (
@@ -155,7 +158,7 @@ const RightSidebar = ({ isMobile, onClose }) => {
                 return (
                   <div
                     key={index}
-                    className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm   hover:bg-[#282142]`}
+                    className={`relative flex items-center gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm   hover:bg-[#2E2E2E]`}
                   >
                     <img
                       src={user?.profilePic || assets.avatar_icon}
@@ -177,7 +180,10 @@ const RightSidebar = ({ isMobile, onClose }) => {
             setSelectedGroup(null);
             logout();
           }}
-          className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-400 to-violet-600 text-white border-none text-sm font-light py-2 px-20 rounded-full cursor-pointer "
+          className="absolute bottom-5 left-1/2 transform -translate-x-1/2 
+        
+          bg-gradient-to-r from-[#9E8CFF] to-gray-200 text-black 
+          border-none text-sm font-light py-2 px-20 rounded-full cursor-pointer "
         >
           Logout
         </button>

@@ -30,12 +30,12 @@ const MessageInfoModel = ({ message, members, onClose }) => {
         ) : message.image ? (
           <img src={message.image} alt="sent-img" className="mb-4 rounded-lg" />
         ) : (
-          <p className="text-gray-400 mb-4">No content</p>
+          <p className="text-[#9B9B9B] mb-4">No content</p>
         )}
 
         {/* Seen by */}
         <div className="mb-3">
-          <p className="font-medium text-sm text-green-600">Seen By:</p>
+          <p className="font-medium text-sm text-purple-500">Seen By:</p>
           {seenUsers.length > 0 ? (
             seenUsers.map((user) => (
               <p key={user._id} className="text-sm text-gray-600">
@@ -57,7 +57,7 @@ const MessageInfoModel = ({ message, members, onClose }) => {
               </p>
             ))
           ) : (
-            <p className="text-xs text-gray-400">Seen by all</p>
+            <p className="text-xs text-[#9B9B9B]">Seen by all</p>
           )}
         </div>
         <button

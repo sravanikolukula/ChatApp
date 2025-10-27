@@ -5,6 +5,7 @@ import { useAuthContext } from "../context/AuthContext";
 import { useChatContext } from "../context/ChatContext.jsx";
 
 import ContactCard from "./ContactCard.jsx";
+import Logo from "./Logo.jsx";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -45,14 +46,22 @@ const Sidebar = () => {
       onClick={() => {
         showMenu && setShowMenu(false);
       }}
-      className={`bg-[#818582]/10 h-full p-5 rounded-r-xl text-white ${
+      className={`bg-[#0E0E0E]/50 h-full p-5 rounded-r-xl text-white ${
         selectedUser || selectedGroup ? "max-md:hidden" : ""
       }`}
     >
       <div className="pb-5">
         {/* Header section */}
         <div className="flex items-center justify-between ">
-          <img src={assets.logo} alt="logo" className=" max-w-40" />
+          <div className="flex items-baseline space-x-1">
+            <img
+              src={assets.logo}
+              alt="Talkify logo"
+              className="h-7 w-7 sm:h-9 sm:w-9 md:h-10 md:w-10"
+            />
+
+            <Logo text={"text-2xl sm:text-2xl md:text-3xl"} />
+          </div>
           <div className="relative py-2 ">
             <img
               src={assets.menu_icon}
@@ -65,7 +74,7 @@ const Sidebar = () => {
             />
 
             {showMenu && (
-              <div className=" absolute top-full right-0 z-20  w-32 p-5 rounded-md bg-[#282142] border border-gray-600 shadow-lg">
+              <div className=" absolute top-full right-0 z-20  w-32 p-5 rounded-md bg-[#1c1b1b] border border-gray-600 shadow-lg">
                 <p
                   className="text-sm cursor-pointer "
                   onClick={() => {
@@ -100,16 +109,18 @@ const Sidebar = () => {
           </div>
         </div>
         {/* ----Search engine---- */}
-        <div className=" bg-[#282142] rounded-full  flex items-center  gap-2 px-4 py-3 mt-5">
+        <div
+          className="  
+        bg-[#1E1E1E] rounded-full  flex items-center  gap-2 px-4 py-3 mt-5 shadow-inner"
+        >
           <img src={assets.search_icon} alt="Search" className="w-3" />
           <input
             type="text"
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 bg-transparent outline-none border-none  text-white placeholder-[#c8c8c8]"
+            className="flex-1 bg-transparent outline-none border-none text-[#EAEAEA] placeholder-[#707070]"
             placeholder="Search User..."
           />
         </div>
-
         <div className="grid grid-cols-2 text-center py-3">
           <div
             onClick={() => setIsGroups(false)}
@@ -119,7 +130,7 @@ const Sidebar = () => {
             <div
               className={`${
                 isGroups ? "hidden" : "block"
-              } w-16 md:w-24 h-1 bg-purple-400 px-4 rounded-full`}
+              } w-16 md:w-24 h-1  bg-gradient-to-r from-[#9E8CFF] to-[#CFC8FF] text-black hover:shadow-[0_0_10px_2px_rgba(255,255,255,0.4)] px-4 rounded-full`}
             ></div>
           </div>
           <div
@@ -130,11 +141,10 @@ const Sidebar = () => {
             <div
               className={`${
                 !isGroups ? "hidden" : "block"
-              } w-16 md:w-24 h-1 bg-purple-400 px-4 rounded-full`}
+              } w-16 md:w-24 h-1 bg-gradient-to-r from-[#9E8CFF] to-[#CFC8FF] text-black hover:shadow-[0_0_10px_2px_rgba(255,255,255,0.4)] px-4 rounded-full`}
             ></div>
           </div>
         </div>
-
         {/* ----Contacts List---- */}
         <div className="hide-scrollbar flex flex-col overflow-y-auto max-h-[calc(100vh-250px)]">
           {!isGroups

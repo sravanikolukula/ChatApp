@@ -34,7 +34,6 @@ const ChatContainer = ({ onHeaderClick }) => {
   const [showMsgInfo, setShowMsgInfo] = useState(false);
 
   const scrollEnd = useRef(); //Ref to auto-scroll to  the latest message
-  // const [input, setInput] = useState("");
   const typingTimeoutRef = useRef(null); //Ref to bounce "typing" event
 
   const chatId = selectedUser?._id || selectedGroup?._id;
@@ -175,18 +174,18 @@ const ChatContainer = ({ onHeaderClick }) => {
 
   // UI: Placeholder when no chat is selected
   return !(selectedUser || selectedGroup) ? (
-    <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-500 bg-white/10 ">
-      <img src={assets.logo_icon} alt="logo" className="max-w-16" />
+    <div className="h-full flex flex-col items-center justify-center  text-gray-500 bg-[#0E0E0E] gap-1">
+      <img src={assets.logo} alt="logo" className="max-w-44" />
       <p className="text-lg font-medium text-white">Chat anytime,anywhere</p>
     </div>
   ) : (
-    <div className=" hide-scrollbar relative h-full backdrop-blur-lg overflow-y-scroll">
+    <div className=" hide-scrollbar relative h-full backdrop-blur-lg bg-[#0E0E0E] overflow-y-scroll">
       {/* Chat header */}
       <div
         onClick={() => {
           onHeaderClick();
         }}
-        className="flex items-center gap-3 mx-4 py-2 border-b  border-stone-500 "
+        className="flex items-center gap-3 mx-4 py-3 border-b  border-stone-500 bg-[#121212]  "
       >
         <img
           src={
@@ -207,11 +206,14 @@ const ChatContainer = ({ onHeaderClick }) => {
           </p>
 
           {isTyping && selectedUser && (
-            <p className="text-sm text-green-400 ">typing...</p>
+            <p className="text-sm bg-gradient-to-r from-[#9E8CFF] to-[#CFC8FF] bg-clip-text text-transparent">
+              typing...
+            </p>
           )}
 
           {isTypingGrp && selectedGroup && (
-            <p className="text-sm text-green-400">
+            <p className="text-sm bg-gradient-to-r from-[#9E8CFF] to-[#CFC8FF] bg-clip-text text-transparent">
+              {/* text-green-400 */}
               {isTypingGrp} is typing...{" "}
             </p>
           )}
@@ -241,7 +243,7 @@ const ChatContainer = ({ onHeaderClick }) => {
               return (
                 <div
                   key={index}
-                  className="text-center text-gray-400 my-1 text-xs"
+                  className="text-center text-[#9B9B9B] my-1 text-xs"
                 >
                   {msg.text}
                 </div>
@@ -274,7 +276,7 @@ const ChatContainer = ({ onHeaderClick }) => {
                 {msg.image ? (
                   <img
                     src={msg.image}
-                    className="max-w-[230px] border border-gray-700 rounded-lg mb-8 overflow-hidden "
+                    className="max-w-[230px] border border-[#6b6a6a] rounded-lg mb-8 overflow-hidden "
                     onClick={() => {
                       if (isSelf && selectedGroup) {
                         setSelectedMsg(msg);
@@ -285,10 +287,10 @@ const ChatContainer = ({ onHeaderClick }) => {
                 ) : (
                   /* Text messsage */
                   <p
-                    className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
+                    className={`p-2 max-w-[200px] md:text-sm font-light rounded-2xl mb-8 break-all  ${
                       senderId === authUser._id
-                        ? "rounded-br-none "
-                        : "rounded-bl-none "
+                        ? " bg-[#EAEAEA] text-[#2A2A2A]  rounded-br-none "
+                        : " bg-[#2A2A2A] text-[#EAEAEA]   rounded-bl-none "
                     }`} //break-all= Forces line breaks anywhere within words if necessary to prevent overflow.
                     onClick={() => {
                       if (isSelf && selectedGroup) {
@@ -297,15 +299,8 @@ const ChatContainer = ({ onHeaderClick }) => {
                       }
                     }}
                   >
-                    {/*   {selectedGroup && senderId !== authUser._id && (
-                      <span className="font-semibold text-xs text-blue-300 block mb-1">
-                        {typeof msg.sender_id === "object"
-                          ? msg.sender_id.fullName
-                          : "Unknown User"}
-                      </span>
-                    )} */}
                     {selectedGroup && senderId !== authUser._id && (
-                      <span className="font-semibold text-xs text-purple-300 block mb-1">
+                      <span className="font-semibold text-xs  text-[#EAEAEA]  block mb-1">
                         {typeof msg.sender_id === "object"
                           ? msg.sender_id.fullName
                           : "Unknown User"}
@@ -343,11 +338,11 @@ const ChatContainer = ({ onHeaderClick }) => {
                           !selectedGroup
                             ? msg.seen
                               ? "text-blue-400"
-                              : "text-gray-400"
+                              : "text-[#9B9B9B]"
                             : msg.seenBy?.filter(Boolean).length >=
                               (msg.membersAtSendTime?.length || 0) - 1
                             ? "text-blue-400"
-                            : "text-gray-400"
+                            : "text-[#9B9B9B]"
                         }
                       />
                     )}
@@ -360,9 +355,9 @@ const ChatContainer = ({ onHeaderClick }) => {
 
         <div ref={scrollEnd}></div>
       </div>{" "}
-      {/* ---Input area---- */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3">
-        <div className="flex-1 flex items-center bg-gray-100/12 px-3 rounded-full">
+      {/* ---Input area---- */}m, \
+      <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3 ">
+        <div className="flex-1 flex items-center bg-[#1E1E1E] px-3 rounded-full border-[#2E2E2E] shadow-inner">
           <input
             ref={inputRef}
             onChange={(e) => {
@@ -377,7 +372,7 @@ const ChatContainer = ({ onHeaderClick }) => {
             value={message}
             type="text"
             placeholder="Send a message"
-            className="flex-1 text-sm p-3 border-none rounded-lg outline-none text-white placeholder-gray-400"
+            className="flex-1 text-sm p-3 border-none rounded-lg outline-none text-[#EAEAEA] placeholder-[#707070]"
           />
           {/* Image upload input */}
           <input
@@ -391,7 +386,7 @@ const ChatContainer = ({ onHeaderClick }) => {
             <img
               src={assets.gallery_icon}
               alt=""
-              className="w-5 mr-2 cursor-pointer"
+              className="w-5 mr-2 cursor-pointer "
             />
           </label>
         </div>

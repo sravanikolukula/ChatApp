@@ -78,10 +78,10 @@ const AddGrpMembers = () => {
               className="max-w-7 max-h-7"
             />
             <div className="flex flex-col">
-              <h1 className="font-medium text-gray-200">
+              <h1 className="font-medium ">
                 {selectedGroup?.name || "Group Name"}
               </h1>
-              <p className="text-sm text-gray-400">Add members</p>
+              <p className="text-sm text-[#9B9B9B]">Add members</p>
             </div>
           </div>
 
@@ -110,12 +110,12 @@ const AddGrpMembers = () => {
                   className="max-w-7 rounded-full"
                 />
 
-                <p className="text-xs text-gray-400">{user.fullName}</p>
+                <p className="text-xs text-[#9B9B9B]">{user.fullName}</p>
               </div>
             ))}
             <button
               onClick={handleAddGrpMem}
-              className="absolute top-1/2 right-2 -translate-y-1/2 py-1 px-3 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded"
+              className="absolute top-1/2 right-2 -translate-y-1/2 py-1 px-3 bg-gradient-to-r from-[#9E8CFF] to-[#CFC8FF] text-black text-sm font-medium rounded"
             >
               Add
             </button>
@@ -130,7 +130,7 @@ const AddGrpMembers = () => {
             return (
               <div
                 key={user._id}
-                className={`relative flex items-center justify-between gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm  hover:bg-[#282142]`}
+                className={`relative flex items-center justify-between gap-2 p-2 pl-4 rounded cursor-pointer max-sm:text-sm  hover:bg-[#2E2E2E]`}
                 onClick={() => {
                   if (alreadyAdded) {
                     setSelectedMembers((prev) =>
@@ -147,7 +147,7 @@ const AddGrpMembers = () => {
                     alt="profile"
                     className="w-[35px] aspect-[1/1] rounded-full object-cover"
                   />
-                  <p className="text-gray-200">{user?.fullName}</p>
+                  <p className="text-[#EAEAEA]">{user?.fullName}</p>
                 </div>
                 {alreadyAdded && (
                   <div className="mr-2 border border-gray-400 w-3 h-3 flex items-center justify-center rounded-full">
