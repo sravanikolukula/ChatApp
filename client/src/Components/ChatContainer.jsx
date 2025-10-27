@@ -174,9 +174,11 @@ const ChatContainer = ({ onHeaderClick }) => {
 
   // UI: Placeholder when no chat is selected
   return !(selectedUser || selectedGroup) ? (
-    <div className="h-full flex flex-col items-center justify-center  text-gray-500 bg-[#0E0E0E] gap-1">
+    <div className="h-full flex flex-col items-center justify-center  text-gray-500 bg-[#0E0E0E] gap-3">
       <img src={assets.logo} alt="logo" className="max-w-44" />
-      <p className="text-lg font-medium text-white">Chat anytime,anywhere</p>
+      <p className="text-xl font-medium text-white">
+        Let’s talk! The best stories start here.
+      </p>
     </div>
   ) : (
     <div className=" hide-scrollbar relative h-full backdrop-blur-lg bg-[#0E0E0E] overflow-y-scroll">
