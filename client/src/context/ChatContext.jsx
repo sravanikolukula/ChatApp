@@ -215,9 +215,8 @@ export const ChatProvider = ({ children }) => {
         //Emit seen acknowledgment to sender
         socket.emit("message-seen", {
           messageId: newMessage._id,
-          senderId: newMember.sender_id,
-          receiverId: authUser,
-          _id,
+          senderId: newMessage.sender_id,
+          receiverId: authUser._id,
         });
       } else {
         setUnseenMessages((prevUnseenMessages) => ({

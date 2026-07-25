@@ -8,7 +8,6 @@ import { userRouter } from "./routes/userRoutes.js";
 import { messageRouter } from "./routes/messageRoutes.js";
 import { groupRouter } from "./routes/groupRoutes.js";
 import { Group } from "./models/Group.js";
-import { userInfo } from "os";
 import { User } from "./models/User.js";
 import { Messages } from "./models/Messages.js";
 import { getGroupMessages } from "./controllers/messageController.js";
@@ -39,7 +38,7 @@ io.on("connection", async (socket) => {
       io.emit("user-joined", { user });
     }
 
-    io.emit("update-user-list", Object.keys(userInfo));
+    io.emit("update-user-list", Object.keys(userSocketMap));
 
     //Emit to all clients
     io.emit("getOnlineUsers", Object.keys(userSocketMap));

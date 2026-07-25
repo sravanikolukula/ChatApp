@@ -10,8 +10,8 @@ export const signup = async (req, res) => {
   try {
     const { email, fullName, password, bio } = req.body;
 
-    if (!fullName || !email || !password || !bio) {
-      return res.json({ successLtrue, message: "Missing Details" });
+    if (!fullName || !email || !password) {
+      return res.json({ success: false, message: "Missing Details" });
     }
 
     //check if user alrady exists with the give email
@@ -30,7 +30,7 @@ export const signup = async (req, res) => {
     const user = await User.create({
       fullName,
       password: hashedPassword,
-      bio,
+      bio: bio || "",
       email,
     });
 

@@ -189,7 +189,11 @@ export const updateGroup = async (req, res) => {
 };
 
 export const addMembersToGroup = async (req, res) => {
-  const { userId } = req.body;
+  const userId =
+    req.body.userId ||
+    (Array.isArray(req.body.selectedUserIds)
+      ? req.body.selectedUserIds[0]
+      : req.body.selectedUserIds);
   const { groupId } = req.params;
   const currentUserId = req.user._id;
 
@@ -199,16 +203,15 @@ export const addMembersToGroup = async (req, res) => {
       return res.json({ success: false, message: "Group doesnt exist" });
     }
 
-    // if (!group.admins.includes(currentUserId)) {
-    //   return res.json({
-    //     success: false,
-    //     message: "Only Admins can add members",
-    //   });
-    // }
+    if (!userId) {
+      return res.json({ success: false, message: "No user specified" });
+    }
 
     if (
       group.members.some(
-        (member) => member.user.toString() === userId.toString()
+        (member) =>
+          ((member.user && member.user._id) || member.user)?.toString() ===
+          userId.toString()
       )
     ) {
       return res.json({
