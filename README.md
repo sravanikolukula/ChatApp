@@ -18,12 +18,12 @@ A modern, full-stack real-time messaging application built with **React 19**, **
 * 👥 **Add Members in Middle**: Invite additional users to existing group chats at any time.
 * 📢 **Group Message Broadcast**: Broadcast text and image messages instantly to all group members.
 * 👁️ **Multi-User Read Receipts**: Track read receipts (`seenBy`) for all members in a group.
-* 🚪 **Group Exit**: Leave group chats with system notification broadcasts to remaining members.
+
 
 ### ⚙️ System & Backend Features
 * ⚡ **Socket.io Engine**: Event-driven real-time bi-directional communication.
 * ☁️ **Cloudinary Integration**: Cloud photo storage for profile avatars and chat media attachments.
-* 🛡️ **Protected REST API**: Express 5 routing with JWT token authorization middleware (`protectRoute`).
+* 🛡️ **Protected REST API**: Express routing with JWT token authorization middleware (`protectRoute`).
 
 ---
 
@@ -31,9 +31,9 @@ A modern, full-stack real-time messaging application built with **React 19**, **
 
 | Category | Technology |
 | :--- | :--- |
-| **Frontend** | React 19, Vite 6, Tailwind CSS v4, FontAwesome |
+| **Frontend** | React.js, Vite, Tailwind CSS, FontAwesome |
 | **Backend** | Node.js, Express 5 |
-| **Database** | MongoDB, Mongoose ORM |
+| **Database** | MongoDB, Mongoose |
 | **Authentication** | JWT (JSON Web Tokens), Bcryptjs |
 | **Real-Time Engine** | Socket.io |
 | **Media Storage** | Cloudinary |
@@ -79,6 +79,3 @@ npm run dev
 *The React client will run on `http://localhost:5173`.*
 
 ---
-
-## 🛡️ License
-Distributed under the ISC License.
